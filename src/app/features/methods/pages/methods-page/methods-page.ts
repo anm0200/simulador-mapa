@@ -21,7 +21,7 @@ export class MethodsPage {
   public dijkstraVisitedCount: number | null = null;
   public pathDetails: any[] = [];
   public estimatedTimeHours: number | null = null;
-  
+
   public kruskalTotalWeight: number | null = null;
   public kruskalEdgeCount: number | null = null;
   public kruskalPathWeight: number | null = null;
@@ -89,10 +89,10 @@ export class MethodsPage {
     this.algorithmMap?.resetSelection(); // Limpia también las aristas moradas
   }
 
-  onSimulationFinished(result: { distance: number, visitedCount: number, path: any[] }) {
+  onSimulationFinished(result: { distance: number; visitedCount: number; path: any[] }) {
     this.dijkstraDistance = result.distance;
     this.dijkstraVisitedCount = result.visitedCount;
-    
+
     // Procesar desglose de la ruta y tiempo estimado
     this.pathDetails = [];
     let totalTime = 0;
@@ -105,7 +105,7 @@ export class MethodsPage {
           type: 'flight',
           label: `Vuelo Real (${edge.flightId})`,
           distance: edge.weight,
-          time: timeH
+          time: timeH,
         });
       } else {
         const timeH = edge.weight / 100; // Tren/Coche ~100 km/h
@@ -114,30 +114,30 @@ export class MethodsPage {
           type: 'transfer',
           label: `Transbordo Terrestre`,
           distance: edge.weight,
-          time: timeH
+          time: timeH,
         });
       }
     }
-    
+
     this.estimatedTimeHours = totalTime;
   }
 
-  onKruskalFinished(result: { 
-    totalWeight: number, 
-    edgeCount: number, 
-    mstEdges: any[], 
-    mstPath: any[], 
-    mstPathWeight: number 
+  onKruskalFinished(result: {
+    totalWeight: number;
+    edgeCount: number;
+    mstEdges: any[];
+    mstPath: any[];
+    mstPathWeight: number;
   }) {
     this.kruskalTotalWeight = result.totalWeight;
     this.kruskalEdgeCount = result.edgeCount;
     this.kruskalPathWeight = result.mstPathWeight;
-    
+
     // Procesar lista de aristas de Kruskal completas
-    this.kruskalEdgesDetails = result.mstEdges.map(edge => ({
+    this.kruskalEdgesDetails = result.mstEdges.map((edge) => ({
       type: edge.type,
       label: edge.type === 'flight' ? `Vuelo Esencial (${edge.flightId})` : 'Transbordo Terrestre',
-      distance: edge.weight
+      distance: edge.weight,
     }));
 
     // Procesar desglose del camino MST si hay nodos seleccionados
@@ -149,14 +149,14 @@ export class MethodsPage {
             type: 'flight',
             label: `Vuelo por MST (${edge.flightId})`,
             distance: edge.weight,
-            time: edge.weight / 800
+            time: edge.weight / 800,
           });
         } else {
           this.kruskalPathDetails.push({
             type: 'transfer',
             label: `Transbordo MST`,
             distance: edge.weight,
-            time: edge.weight / 100
+            time: edge.weight / 100,
           });
         }
       }

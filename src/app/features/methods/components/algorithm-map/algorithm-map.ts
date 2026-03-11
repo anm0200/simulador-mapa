@@ -1,13 +1,13 @@
-import { 
-  Component, 
-  ElementRef, 
-  ViewChild, 
-  Inject, 
-  PLATFORM_ID, 
-  AfterViewInit, 
+import {
+  Component,
+  ElementRef,
+  ViewChild,
+  Inject,
+  PLATFORM_ID,
+  AfterViewInit,
   OnDestroy,
   Output,
-  EventEmitter
+  EventEmitter,
 } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { GraphService, GraphData, Node, Edge } from '../../services/graph.service';
@@ -16,23 +16,23 @@ import { GraphService, GraphData, Node, Edge } from '../../services/graph.servic
   selector: 'app-algorithm-map',
   standalone: true,
   templateUrl: './algorithm-map.html',
-  styleUrl: './algorithm-map.css'
+  styleUrl: './algorithm-map.css',
 })
 export class AlgorithmMap implements AfterViewInit, OnDestroy {
   @ViewChild('mapContainer', { static: true })
   private mapContainerRef!: ElementRef<HTMLDivElement>;
 
-  @Output() simulationFinished = new EventEmitter<{ 
-    distance: number, 
-    visitedCount: number,
-    path: Edge[]
+  @Output() simulationFinished = new EventEmitter<{
+    distance: number;
+    visitedCount: number;
+    path: Edge[];
   }>();
-  @Output() kruskalFinished = new EventEmitter<{ 
-    totalWeight: number, 
-    edgeCount: number,
-    mstEdges: Edge[],
-    mstPath: Edge[],
-    mstPathWeight: number
+  @Output() kruskalFinished = new EventEmitter<{
+    totalWeight: number;
+    edgeCount: number;
+    mstEdges: Edge[];
+    mstPath: Edge[];
+    mstPathWeight: number;
   }>();
   @Output() graphLoaded = new EventEmitter<GraphData>();
 
@@ -43,7 +43,7 @@ export class AlgorithmMap implements AfterViewInit, OnDestroy {
   private graphData: GraphData | null = null;
   private nodeMarkers: Map<string, any> = new Map();
   private edgeLines: any[] = [];
-  
+
   private selectedStartNode: string | null = null;
   private selectedEndNode: string | null = null;
 
@@ -54,7 +54,7 @@ export class AlgorithmMap implements AfterViewInit, OnDestroy {
 
   constructor(
     @Inject(PLATFORM_ID) platformId: object,
-    @Inject(GraphService) private graphService: GraphService
+    @Inject(GraphService) private graphService: GraphService,
   ) {
     this.isBrowser = isPlatformBrowser(platformId);
   }
@@ -77,7 +77,7 @@ export class AlgorithmMap implements AfterViewInit, OnDestroy {
     this.map = this.L.map(this.mapContainerRef.nativeElement, {
       center: [40.0, -3.5],
       zoom: 6,
-      zoomControl: true
+      zoomControl: true,
     });
 
     this.L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -89,11 +89,11 @@ export class AlgorithmMap implements AfterViewInit, OnDestroy {
     if (this.map) {
       this.clearAlgorithmResults();
       for (const line of this.edgeLines) this.map.removeLayer(line);
-      this.nodeMarkers.forEach(marker => this.map.removeLayer(marker));
+      this.nodeMarkers.forEach((marker) => this.map.removeLayer(marker));
       this.nodeMarkers.clear();
       this.edgeLines = [];
     }
-  
+
     this.graphData = await this.graphService.loadGraphFromRealData(radiusKm);
     this.graphLoaded.emit(this.graphData);
     this.renderGraph();
@@ -116,25 +116,25 @@ export class AlgorithmMap implements AfterViewInit, OnDestroy {
 
       if (edge.path) {
         const latlngs = edge.path.map((p: any) => [p.lat, p.lng]);
-        
+
         let polyline: any;
         if (edge.type === 'flight') {
           // Vuelo real (Gris sólido)
           polyline = this.L.polyline(latlngs, {
-            color: '#64748b', 
-            weight: 4,        
-            opacity: 0.6      
+            color: '#64748b',
+            weight: 4,
+            opacity: 0.6,
           }).addTo(this.map);
         } else {
           // Transbordo (Gris claro punteado)
           polyline = this.L.polyline(latlngs, {
-            color: '#94a3b8', 
-            weight: 2,        
+            color: '#94a3b8',
+            weight: 2,
             opacity: 0.3,
-            dashArray: '4, 6'
+            dashArray: '4, 6',
           }).addTo(this.map);
         }
-        
+
         this.edgeLines.push(polyline);
       }
     }
@@ -142,20 +142,20 @@ export class AlgorithmMap implements AfterViewInit, OnDestroy {
     // Dibujar nodos (Puntos de inicio y fin)
     for (const node of this.graphData.nodes) {
       bounds.extend([node.lat, node.lng]);
-      
+
       const marker = this.L.circleMarker([node.lat, node.lng], {
         radius: 5,
         fillColor: '#3b82f6', // blue-500
         color: '#1e3a8a',
         weight: 1,
         opacity: 1,
-        fillOpacity: 0.8
+        fillOpacity: 0.8,
       }).addTo(this.map);
 
       marker.bindTooltip(`Nodo: ${node.lat.toFixed(2)}, ${node.lng.toFixed(2)}`);
-      
+
       marker.on('click', () => this.onNodeClick(node.id));
-      
+
       this.nodeMarkers.set(node.id, marker);
     }
 
@@ -168,14 +168,14 @@ export class AlgorithmMap implements AfterViewInit, OnDestroy {
     if (this.animationTimeouts.length > 0) return; // Si está animando, bloquear
 
     const marker = this.nodeMarkers.get(nodeId);
-    
+
     // Si ya está seleccionado, lo desseleccionamos
     if (this.selectedStartNode === nodeId) {
       this.selectedStartNode = null;
       marker.setStyle({ fillColor: '#3b82f6', radius: 5 }); // Reset a azul
       return;
     }
-    
+
     if (this.selectedEndNode === nodeId) {
       this.selectedEndNode = null;
       marker.setStyle({ fillColor: '#3b82f6', radius: 5 }); // Reset a azul
@@ -193,10 +193,10 @@ export class AlgorithmMap implements AfterViewInit, OnDestroy {
       // Si ya hay 2, reseteamos el origen y ponemos el nuevo como origen
       const oldStartMarker = this.nodeMarkers.get(this.selectedStartNode);
       if (oldStartMarker) oldStartMarker.setStyle({ fillColor: '#3b82f6', radius: 5 });
-      
+
       this.selectedStartNode = nodeId;
       marker.setStyle({ fillColor: '#22c55e', radius: 8 });
-      
+
       // Reseteamos rutas anteriores al hacer nueva selección completa
       this.clearAlgorithmResults();
     }
@@ -242,10 +242,10 @@ export class AlgorithmMap implements AfterViewInit, OnDestroy {
       const timeout = setTimeout(() => {
         if (edge.path) {
           const latlngs = edge.path.map((p: any) => [p.lat, p.lng]);
-          
+
           let color = '#8b5cf6'; // violet-500 para vuelos en MST
           let dashArray = '';
-          
+
           if (edge.type === 'transfer') {
             color = '#c4b5fd'; // violet aclarado para transbordos MST
             dashArray = '5, 5';
@@ -255,9 +255,9 @@ export class AlgorithmMap implements AfterViewInit, OnDestroy {
             color: color,
             weight: 4,
             opacity: 0.9,
-            dashArray: dashArray
+            dashArray: dashArray,
           }).addTo(this.map);
-          
+
           this.explorationLayers.push(mstLayer);
         }
       }, i * ANIMATION_SPEED_MS);
@@ -266,28 +266,31 @@ export class AlgorithmMap implements AfterViewInit, OnDestroy {
 
     // Al finalizar
     const finalTimeout = setTimeout(() => {
-      
       let mstPath: Edge[] = [];
       let mstPathWeight = 0;
-      
+
       // Si el usuario seleccionó un origen y destino, calculamos el camino que los une por dentro del MST
       if (this.selectedStartNode && this.selectedEndNode) {
-        mstPath = this.graphService.findPathInMST(this.selectedStartNode, this.selectedEndNode, mstEdges);
+        mstPath = this.graphService.findPathInMST(
+          this.selectedStartNode,
+          this.selectedEndNode,
+          mstEdges,
+        );
         mstPathWeight = mstPath.reduce((acc, edge) => acc + edge.weight, 0);
-        
+
         // Lo dibujamos llamando al mismo método que usa Dijkstra
         this.drawShortestPath(mstPath);
       }
 
-      this.kruskalFinished.emit({ 
-        totalWeight, 
+      this.kruskalFinished.emit({
+        totalWeight,
         edgeCount: mstEdges.length,
         mstEdges,
         mstPath,
-        mstPathWeight
+        mstPathWeight,
       });
     }, mstEdges.length * ANIMATION_SPEED_MS);
-    
+
     this.animationTimeouts.push(finalTimeout);
   }
 
@@ -306,7 +309,7 @@ export class AlgorithmMap implements AfterViewInit, OnDestroy {
         if (marker) {
           marker.setStyle({ fillColor: '#f59e0b' }); // Naranja para explorado
         }
-        
+
         // Dibujamos la arista por la que llegamos a este nodo en la exploración
         const edgeToReach = pathMap.get(nodeId);
         if (edgeToReach && edgeToReach.path) {
@@ -315,11 +318,10 @@ export class AlgorithmMap implements AfterViewInit, OnDestroy {
             color: '#fcd34d', // amarillo claro
             weight: 3,
             opacity: 0.6,
-            dashArray: '5, 5'
+            dashArray: '5, 5',
           }).addTo(this.map);
           this.explorationLayers.push(expLayer);
         }
-
       }, i * ANIMATION_SPEED_MS);
       this.animationTimeouts.push(timeout);
     }
@@ -327,24 +329,24 @@ export class AlgorithmMap implements AfterViewInit, OnDestroy {
     // Al finalizar la exploración, dibujamos la ruta final
     const finalTimeout = setTimeout(() => {
       this.drawShortestPath(shortestPath);
-      this.simulationFinished.emit({ 
-        distance, 
+      this.simulationFinished.emit({
+        distance,
         visitedCount: visitedOrder.length,
-        path: shortestPath
+        path: shortestPath,
       });
     }, visitedOrder.length * ANIMATION_SPEED_MS);
-    
+
     this.animationTimeouts.push(finalTimeout);
   }
 
   private drawShortestPath(shortestPath: Edge[]): void {
     const layers: any[] = [];
-    
+
     // Iterar sobre cada arista del camino mínimo para aplicarle su estilo
     for (const edge of shortestPath) {
       if (edge.path) {
         const latlngs = edge.path.map((p: any) => [p.lat, p.lng]);
-        
+
         let polyline: any;
         if (edge.type === 'flight') {
           // Vuelo: Trazo continuo verde
@@ -356,10 +358,10 @@ export class AlgorithmMap implements AfterViewInit, OnDestroy {
         } else {
           // Transbordo: Trazo punteado/con guiones verde
           polyline = this.L.polyline(latlngs, {
-            color: '#10b981', 
+            color: '#10b981',
             weight: 5,
             opacity: 0.9,
-            dashArray: '8, 10' // Punteado para diferenciarlos
+            dashArray: '8, 10', // Punteado para diferenciarlos
           });
         }
         layers.push(polyline);
@@ -369,7 +371,7 @@ export class AlgorithmMap implements AfterViewInit, OnDestroy {
     if (layers.length > 0) {
       // Agrupamos las líneas en un FeatureGroup para mandarlas al mapa de golpe
       this.pathLayer = this.L.featureGroup(layers).addTo(this.map);
-      
+
       // Animamos el zoom hacia toda la ruta completa
       this.map.fitBounds(this.pathLayer.getBounds(), { padding: [50, 50], animate: true });
     }
@@ -378,13 +380,13 @@ export class AlgorithmMap implements AfterViewInit, OnDestroy {
   public resetSelection(): void {
     this.clearAnimation();
     this.clearAlgorithmResults();
-    
+
     if (this.selectedStartNode) {
       const marker = this.nodeMarkers.get(this.selectedStartNode);
       if (marker) marker.setStyle({ fillColor: '#3b82f6', radius: 5 });
       this.selectedStartNode = null;
     }
-    
+
     if (this.selectedEndNode) {
       const marker = this.nodeMarkers.get(this.selectedEndNode);
       if (marker) marker.setStyle({ fillColor: '#3b82f6', radius: 5 });

@@ -39,8 +39,12 @@
   background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
 }
 
-.kpi-card.highlight .kpi-label { color: rgba(255,255,255,0.8); }
-.kpi-card.highlight .kpi-value { color: white; }
+.kpi-card.highlight .kpi-label {
+  color: rgba(255, 255, 255, 0.8);
+}
+.kpi-card.highlight .kpi-value {
+  color: white;
+}
 
 .kpi-label {
   font-size: 0.75rem;
@@ -241,9 +245,17 @@
   transform: translateY(-1px);
 }
 
-.sortable { cursor: pointer; transition: background 0.2s; }
-.sortable:hover { background: #f1f5f9; }
-.active-sort { color: #2563eb !important; border-bottom: 2px solid #2563eb !important; }
+.sortable {
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.sortable:hover {
+  background: #f1f5f9;
+}
+.active-sort {
+  color: #2563eb !important;
+  border-bottom: 2px solid #2563eb !important;
+}
 
 /* Cards View */
 .data-cards {
@@ -278,7 +290,10 @@
   margin-bottom: 8px;
 }
 
-.flight-card h3 { margin: 0; color: #1e293b; }
+.flight-card h3 {
+  margin: 0;
+  color: #1e293b;
+}
 
 .flight-card__duration {
   background: #eff6ff;
@@ -304,7 +319,7 @@
 .trajectory-modal-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(15,23,42,0.6);
+  background: rgba(15, 23, 42, 0.6);
   backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
@@ -329,8 +344,14 @@
   border-bottom: 1px solid #f1f5f9;
 }
 
-.trajectory-modal__header h3 { margin: 0; font-size: 1.25rem; }
-.trajectory-modal__header p { margin: 4px 0 0; color: #64748b; }
+.trajectory-modal__header h3 {
+  margin: 0;
+  font-size: 1.25rem;
+}
+.trajectory-modal__header p {
+  margin: 4px 0 0;
+  color: #64748b;
+}
 
 .trajectory-modal__details {
   padding: 16px 24px;
@@ -383,4 +404,4 @@
   background: white;
   color: #1e293b;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-}
+}

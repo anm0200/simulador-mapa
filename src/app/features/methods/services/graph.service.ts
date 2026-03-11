@@ -18,7 +18,7 @@ export interface Edge {
   weight: number;
   type: 'flight' | 'transfer'; // Para diferenciar cómo se dibujan
   flightId?: string;
-  path?: Point[]; 
+  path?: Point[];
 }
 
 export interface GraphData {
@@ -27,14 +27,13 @@ export interface GraphData {
 }
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class GraphService {
-
   private graph: GraphData = { nodes: [], edges: [] };
   private adjacencyList: Map<string, Edge[]> = new Map();
 
-  constructor() { }
+  constructor() {}
 
   /**
    * Lee el archivo GeoJSON y crea un grafo basado estrictamente
@@ -44,23 +43,23 @@ export class GraphService {
     try {
       const response = await fetch('/data/iberian_flights_soiei4h.json');
       const geojson = await response.json();
-      
+
       this.graph = { nodes: [], edges: [] };
       this.adjacencyList.clear();
 
       const features = geojson?.features ?? [];
-      
-      // Para clustering: Guardamos los clústeres creados
-      const clusters: { id: string, lat: number, lng: number }[] = [];
 
-      const getCluster = (lat: number, lng: number): { id: string, lat: number, lng: number } => {
+      // Para clustering: Guardamos los clústeres creados
+      const clusters: { id: string; lat: number; lng: number }[] = [];
+
+      const getCluster = (lat: number, lng: number): { id: string; lat: number; lng: number } => {
         if (clusterRadiusKm <= 0) {
           return { id: `${lat},${lng}`, lat, lng };
         }
 
         let closest = null;
         let minDist = Infinity;
-        
+
         for (const c of clusters) {
           const d = this.calculateDistance(lat, lng, c.lat, c.lng);
           if (d < minDist) {
@@ -106,7 +105,12 @@ export class GraphService {
           continue;
         }
 
-        const weight = this.calculateDistance(startNode.lat, startNode.lng, endNode.lat, endNode.lng);
+        const weight = this.calculateDistance(
+          startNode.lat,
+          startNode.lng,
+          endNode.lat,
+          endNode.lng,
+        );
         const path: Point[] = coords.map((c: any) => ({ lat: c[1], lng: c[0] }));
         const flightId = `flight_${i}`;
 
@@ -118,25 +122,28 @@ export class GraphService {
       // Conectamos nodos cercanos para que el jugador pueda "hacer transbordo"
       // entre vuelos distintos. De lo contrario, los vuelos son líneas aisladas.
       const MAX_TRANSFER_DIST = 500; // km
-      
+
       const nodesList = this.graph.nodes;
       for (let i = 0; i < nodesList.length; i++) {
         for (let j = i + 1; j < nodesList.length; j++) {
           const n1 = nodesList[i];
           const n2 = nodesList[j];
-          
+
           const dist = this.calculateDistance(n1.lat, n1.lng, n2.lat, n2.lng);
-          
+
           if (dist < MAX_TRANSFER_DIST && dist > 0) {
             // Penalizamos un poco el peso del transbordo para que prefiera vuelos largos reales
-            const weight = dist * 1.5; 
-            
+            const weight = dist * 1.5;
+
             // Verificamos si ya existe una arista real entre ellos
             const existingEdges = this.adjacencyList.get(n1.id) || [];
-            const alreadyConnected = existingEdges.some(e => e.targetId === n2.id);
-            
+            const alreadyConnected = existingEdges.some((e) => e.targetId === n2.id);
+
             if (!alreadyConnected) {
-              const path = [{lat: n1.lat, lng: n1.lng}, {lat: n2.lat, lng: n2.lng}];
+              const path = [
+                { lat: n1.lat, lng: n1.lng },
+                { lat: n2.lat, lng: n2.lng },
+              ];
               this.addEdge(n1.id, n2.id, weight, 'transfer', 'transfer', path);
               this.addEdge(n2.id, n1.id, weight, 'transfer', 'transfer', [...path].reverse());
             }
@@ -145,7 +152,6 @@ export class GraphService {
       }
 
       return this.graph;
-
     } catch (error) {
       console.error('Error loading graph data:', error);
       throw error;
@@ -163,7 +169,14 @@ export class GraphService {
     }
   }
 
-  private addEdge(sourceId: string, targetId: string, weight: number, type: 'flight' | 'transfer', flightId: string, path: Point[]) {
+  private addEdge(
+    sourceId: string,
+    targetId: string,
+    weight: number,
+    type: 'flight' | 'transfer',
+    flightId: string,
+    path: Point[],
+  ) {
     const edge: Edge = { sourceId, targetId, weight, type, flightId, path };
     this.graph.edges.push(edge);
     this.adjacencyList.get(sourceId)?.push(edge);
@@ -172,17 +185,20 @@ export class GraphService {
   /**
    * Algoritmo de Dijkstra estándar
    */
-  runDijkstra(startId: string, endId: string): { 
-    pathMap: Map<string, Edge | null>, 
-    shortestPath: Edge[],
-    visitedOrder: string[],
-    distance: number 
+  runDijkstra(
+    startId: string,
+    endId: string,
+  ): {
+    pathMap: Map<string, Edge | null>;
+    shortestPath: Edge[];
+    visitedOrder: string[];
+    distance: number;
   } {
     const distances = new Map<string, number>();
     const previous = new Map<string, Edge | null>();
     const visited = new Set<string>();
     const visitedOrder: string[] = [];
-    const queue: { id: string, dist: number }[] = [];
+    const queue: { id: string; dist: number }[] = [];
 
     // Initialize
     for (const node of this.graph.nodes) {
@@ -200,7 +216,7 @@ export class GraphService {
       const currentId = current.id;
 
       if (visited.has(currentId)) continue;
-      
+
       visited.add(currentId);
       visitedOrder.push(currentId);
 
@@ -224,10 +240,10 @@ export class GraphService {
     // Reconstruct path
     const shortestPath: Edge[] = [];
     let curr = endId;
-    
+
     // Check if path exists
     if (distances.get(endId) === Infinity) {
-       return { pathMap: previous, shortestPath: [], visitedOrder, distance: Infinity };
+      return { pathMap: previous, shortestPath: [], visitedOrder, distance: Infinity };
     }
 
     while (curr !== startId) {
@@ -240,11 +256,11 @@ export class GraphService {
       }
     }
 
-    return { 
-      pathMap: previous, 
-      shortestPath, 
+    return {
+      pathMap: previous,
+      shortestPath,
       visitedOrder,
-      distance: distances.get(endId) || 0
+      distance: distances.get(endId) || 0,
     };
   }
 
@@ -252,7 +268,7 @@ export class GraphService {
    * Algoritmo de Kruskal (MST)
    * Devuelve un arreglo de aristas que forman el Árbol de Recubrimiento Mínimo.
    */
-  runKruskal(): { mstEdges: Edge[], totalWeight: number, edgeProcessOrder: Edge[] } {
+  runKruskal(): { mstEdges: Edge[]; totalWeight: number; edgeProcessOrder: Edge[] } {
     // 1. Extraer TODAS las aristas y eliminar duplicados (A->B es lo mismo que B->A para MST no dirigido)
     const uniqueEdges: Edge[] = [];
     const seenMap = new Set<string>();
@@ -324,7 +340,7 @@ export class GraphService {
     // 4. Iterar sobre las aristas ordenadas
     for (const edge of uniqueEdges) {
       edgeProcessOrder.push(edge); // Para visualización: todas las aristas comprobadas
-      
+
       const rootSource = find(edge.sourceId);
       const rootTarget = find(edge.targetId);
 
@@ -334,7 +350,7 @@ export class GraphService {
         totalWeight += edge.weight;
         union(rootSource, rootTarget);
       }
-      
+
       // OPTIMIZACIÓN REALISTA: Kruskal termina cuando tenemos N-1 aristas en el árbol
       if (mstEdges.length === this.graph.nodes.length - 1) {
         break;
@@ -353,14 +369,14 @@ export class GraphService {
     for (const e of mstEdges) {
       if (!mstAdj.has(e.sourceId)) mstAdj.set(e.sourceId, []);
       if (!mstAdj.has(e.targetId)) mstAdj.set(e.targetId, []);
-      
+
       mstAdj.get(e.sourceId)!.push(e);
       // Para navegar en ambas direcciones necesitamos crear la arista inversa visualmente (para la dirección del path)
-      mstAdj.get(e.targetId)!.push({ 
-        ...e, 
-        sourceId: e.targetId, 
-        targetId: e.sourceId, 
-        path: e.path ? [...e.path].reverse() : undefined 
+      mstAdj.get(e.targetId)!.push({
+        ...e,
+        sourceId: e.targetId,
+        targetId: e.sourceId,
+        path: e.path ? [...e.path].reverse() : undefined,
       });
     }
 
@@ -368,13 +384,13 @@ export class GraphService {
     const queue: string[] = [startId];
     const visited = new Set<string>();
     const parent = new Map<string, Edge>();
-    
+
     visited.add(startId);
-    
+
     while (queue.length > 0) {
       const curr = queue.shift()!;
       if (curr === endId) break;
-      
+
       const neighbors = mstAdj.get(curr) || [];
       for (const edge of neighbors) {
         if (!visited.has(edge.targetId)) {
@@ -395,7 +411,7 @@ export class GraphService {
       path.unshift(edge);
       curr = edge.sourceId;
     }
-    
+
     return path;
   }
 
@@ -406,8 +422,10 @@ export class GraphService {
     const dLon = this.deg2rad(lon2 - lon1);
     const a =
       Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-      Math.cos(this.deg2rad(lat1)) * Math.cos(this.deg2rad(lat2)) *
-      Math.sin(dLon / 2) * Math.sin(dLon / 2);
+      Math.cos(this.deg2rad(lat1)) *
+        Math.cos(this.deg2rad(lat2)) *
+        Math.sin(dLon / 2) *
+        Math.sin(dLon / 2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     return R * c;
   }

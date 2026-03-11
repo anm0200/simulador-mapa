@@ -55,7 +55,7 @@ export class DataPage implements AfterViewInit, OnDestroy {
   loadError = '';
   currentView: 'table' | 'cards' = 'table';
   selectedFlight: FlightDataItem | null = null;
-  
+
   // Variables de Búsqueda y Ordenación
   searchTerm: string = '';
   sortColumn: string = '';
@@ -92,7 +92,7 @@ export class DataPage implements AfterViewInit, OnDestroy {
 
   constructor(
     @Inject(PLATFORM_ID) platformId: object,
-    private readonly cdr: ChangeDetectorRef
+    private readonly cdr: ChangeDetectorRef,
   ) {
     this.isBrowser = isPlatformBrowser(platformId);
   }
@@ -149,7 +149,7 @@ export class DataPage implements AfterViewInit, OnDestroy {
               Number.isFinite(point.lat) &&
               Number.isFinite(point.lng) &&
               Number.isFinite(point.altitude) &&
-              Number.isFinite(point.timestamp)
+              Number.isFinite(point.timestamp),
           )
           .sort((a: FlightPoint, b: FlightPoint) => a.timestamp - b.timestamp);
 
@@ -162,10 +162,7 @@ export class DataPage implements AfterViewInit, OnDestroy {
 
         const firstDetectionTime = firstPoint.timestamp;
         const lastDetectionTime = lastPoint.timestamp;
-        const observedDurationSeconds = Math.max(
-          0,
-          lastDetectionTime - firstDetectionTime
-        );
+        const observedDurationSeconds = Math.max(0, lastDetectionTime - firstDetectionTime);
 
         const altitudes = points.map((point) => point.altitude);
         const minAltitude = Math.min(...altitudes);
@@ -230,7 +227,7 @@ export class DataPage implements AfterViewInit, OnDestroy {
     // 1. Buscador Inteligente (excluye IDs genéricos si el término no es exacto)
     if (this.searchTerm.trim()) {
       const term = this.searchTerm.toLowerCase().trim();
-      result = result.filter(f => {
+      result = result.filter((f) => {
         const isGeneric = f.id.toLowerCase().startsWith('flight-') || /^\d+$/.test(f.id);
         // Si el usuario busca algo, intentamos que no sea el ID genérico a menos que coincida exacto
         if (isGeneric && !f.id.toLowerCase().includes(term)) return false;
@@ -240,31 +237,31 @@ export class DataPage implements AfterViewInit, OnDestroy {
 
     // 2. Filtros de Rango
     if (this.filterMinDuration !== null) {
-      result = result.filter(f => f.observedDurationSeconds >= (this.filterMinDuration! * 60));
+      result = result.filter((f) => f.observedDurationSeconds >= this.filterMinDuration! * 60);
     }
     if (this.filterMaxDuration !== null) {
-      result = result.filter(f => f.observedDurationSeconds <= (this.filterMaxDuration! * 60));
+      result = result.filter((f) => f.observedDurationSeconds <= this.filterMaxDuration! * 60);
     }
     if (this.filterMinAltitude !== null) {
-      result = result.filter(f => f.avgAltitude >= this.filterMinAltitude!);
+      result = result.filter((f) => f.avgAltitude >= this.filterMinAltitude!);
     }
     if (this.filterMaxAltitude !== null) {
-      result = result.filter(f => f.avgAltitude <= this.filterMaxAltitude!);
+      result = result.filter((f) => f.avgAltitude <= this.filterMaxAltitude!);
     }
     if (this.filterMinDistance !== null) {
-      result = result.filter(f => f.totalDistanceKm >= this.filterMinDistance!);
+      result = result.filter((f) => f.totalDistanceKm >= this.filterMinDistance!);
     }
     if (this.filterMaxDistance !== null) {
-      result = result.filter(f => f.totalDistanceKm <= this.filterMaxDistance!);
+      result = result.filter((f) => f.totalDistanceKm <= this.filterMaxDistance!);
     }
     if (this.filterMinPoints !== null) {
-      result = result.filter(f => f.pointsCount >= this.filterMinPoints!);
+      result = result.filter((f) => f.pointsCount >= this.filterMinPoints!);
     }
     if (this.filterMaxPoints !== null) {
-      result = result.filter(f => f.pointsCount <= this.filterMaxPoints!);
+      result = result.filter((f) => f.pointsCount <= this.filterMaxPoints!);
     }
     if (this.filterStartHour !== null || this.filterEndHour !== null) {
-      result = result.filter(f => {
+      result = result.filter((f) => {
         const hour = new Date(f.firstDetectionTime * 1000).getHours();
         const start = this.filterStartHour ?? 0;
         const end = this.filterEndHour ?? 23;
@@ -279,12 +276,28 @@ export class DataPage implements AfterViewInit, OnDestroy {
         let valB: any;
 
         switch (this.sortColumn) {
-          case 'id': valA = a.id; valB = b.id; break;
-          case 'duration': valA = a.observedDurationSeconds; valB = b.observedDurationSeconds; break;
-          case 'maxAltitude': valA = a.maxAltitude; valB = b.maxAltitude; break;
-          case 'pointsCount': valA = a.pointsCount; valB = b.pointsCount; break;
-          case 'distance': valA = a.totalDistanceKm; valB = b.totalDistanceKm; break;
-          default: return 0;
+          case 'id':
+            valA = a.id;
+            valB = b.id;
+            break;
+          case 'duration':
+            valA = a.observedDurationSeconds;
+            valB = b.observedDurationSeconds;
+            break;
+          case 'maxAltitude':
+            valA = a.maxAltitude;
+            valB = b.maxAltitude;
+            break;
+          case 'pointsCount':
+            valA = a.pointsCount;
+            valB = b.pointsCount;
+            break;
+          case 'distance':
+            valA = a.totalDistanceKm;
+            valB = b.totalDistanceKm;
+            break;
+          default:
+            return 0;
         }
 
         if (valA < valB) return this.sortDirection === 'asc' ? -1 : 1;
@@ -330,17 +343,23 @@ export class DataPage implements AfterViewInit, OnDestroy {
     }
 
     this.kpiLongestFlight = this.formatDuration(maxDuration);
-    this.kpiAvgAltitude = countAltitude > 0 ? this.formatAltitude(totalAltitude / countAltitude) : '0 m';
+    this.kpiAvgAltitude =
+      countAltitude > 0 ? this.formatAltitude(totalAltitude / countAltitude) : '0 m';
     this.kpiMaxPoints = maxPoints;
-    
+
     // Consumo estimado: 15kg/min aprox para un avión comercial tipo A320
     this.kpiTotalConsumptionKg = Math.round((totalSeconds / 60) * 15);
 
     const total = currentFlights.length;
     this.flightCategories = [
       { label: 'Corto (<45m)', count: corto, percentage: (corto / total) * 100, color: '#3b82f6' },
-      { label: 'Medio (45-90m)', count: medio, percentage: (medio / total) * 100, color: '#8b5cf6' },
-      { label: 'Largo (>90m)', count: largo, percentage: (largo / total) * 100, color: '#ec4899' }
+      {
+        label: 'Medio (45-90m)',
+        count: medio,
+        percentage: (medio / total) * 100,
+        color: '#8b5cf6',
+      },
+      { label: 'Largo (>90m)', count: largo, percentage: (largo / total) * 100, color: '#ec4899' },
     ];
 
     this.cdr.detectChanges();
@@ -353,13 +372,15 @@ export class DataPage implements AfterViewInit, OnDestroy {
 
   private calculateDistance(p1: FlightPoint, p2: FlightPoint): number {
     const R = 6371; // Radio de la Tierra en km
-    const dLat = (p2.lat - p1.lat) * Math.PI / 180;
-    const dLon = (p2.lng - p1.lng) * Math.PI / 180;
-    const a = 
-      Math.sin(dLat/2) * Math.sin(dLat/2) +
-      Math.cos(p1.lat * Math.PI / 180) * Math.cos(p2.lat * Math.PI / 180) * 
-      Math.sin(dLon/2) * Math.sin(dLon/2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    const dLat = ((p2.lat - p1.lat) * Math.PI) / 180;
+    const dLon = ((p2.lng - p1.lng) * Math.PI) / 180;
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos((p1.lat * Math.PI) / 180) *
+        Math.cos((p2.lat * Math.PI) / 180) *
+        Math.sin(dLon / 2) *
+        Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     return R * c;
   }
 
@@ -442,34 +463,34 @@ export class DataPage implements AfterViewInit, OnDestroy {
       html: '<div style="font-size: 18px; line-height: 1; text-shadow: 0 2px 4px rgba(0,0,0,0.3);">✈️</div>',
       className: 'airplane-icon-css',
       iconSize: [20, 20],
-      iconAnchor: [10, 10]
+      iconAnchor: [10, 10],
     });
-    
+
     // El avión que se moverá frame a frame, lo añadimos en la primera lat long
-    const movingMarker = this.L.marker(fullRouteLatLngs[0], { 
+    const movingMarker = this.L.marker(fullRouteLatLngs[0], {
       icon: airplaneIcon,
-      zIndexOffset: 1000
+      zIndexOffset: 1000,
     }).addTo(this.modalMap);
 
     let currentPointIndex = 0;
     // Ajustar velocidad para que todos los vuelos tarden aproximadamente 1.5 - 2 seg en dibujarse enteros
-    const speedMs = Math.max(15, Math.floor(1500 / fullRouteLatLngs.length)); 
+    const speedMs = Math.max(15, Math.floor(1500 / fullRouteLatLngs.length));
 
     this.animationInterval = setInterval(() => {
       if (!this.modalMap) {
         clearInterval(this.animationInterval);
         return;
       }
-      
+
       if (currentPointIndex >= fullRouteLatLngs.length) {
         clearInterval(this.animationInterval);
         return;
       }
-      
+
       const point = fullRouteLatLngs[currentPointIndex];
       this.modalHighlightRouteLayer.addLatLng(point);
       movingMarker.setLatLng(point);
-      
+
       currentPointIndex++;
     }, speedMs);
 
@@ -555,9 +576,7 @@ export class DataPage implements AfterViewInit, OnDestroy {
     const minutes = Math.floor((safeSeconds % 3600) / 60);
     const seconds = safeSeconds % 60;
 
-    return [hours, minutes, seconds]
-      .map((value) => value.toString().padStart(2, '0'))
-      .join(':');
+    return [hours, minutes, seconds].map((value) => value.toString().padStart(2, '0')).join(':');
   }
 
   private formatDateTime(unixSeconds: number): string {

@@ -1,59 +1,54 @@
-# SimuladorMapa
+# Simulador de Mapas e Intersecciones (TFG)
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 21.2.1.
+Este proyecto es el resultado de mi Trabajo de Fin de Grado (TFG). Se trata de una aplicación web desarrollada con **Angular 21** para la simulación y visualización de datos geográficos y rutas en mapas interactivos.
 
-## Development server
+## 🚀 Tecnologías Principales
 
-To start a local development server, run:
+- **Framework**: [Angular 21](https://angular.dev/)
+- **Mapas**: [Leaflet](https://leafletjs.com/)
+- **Lenguaje**: TypeScript
+- **Estilos**: Vanilla CSS
+- **Testing**: [Vitest](https://vitest.dev/)
+- **Calidad de Código**: Prettier y GitHub Actions (CI/CD)
 
-```bash
-ng serve
-```
+## 🛠️ Configuración de Desarrollo
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+Para ejecutar el proyecto localmente, asegúrate de tener instalado [Node.js](https://nodejs.org/).
 
-## Code scaffolding
+1. **Instalar dependencias**:
 
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
+   ```bash
+   npm install
+   ```
 
-```bash
-ng generate component component-name
-```
+2. **Iniciar servidor de desarrollo**:
+   ```bash
+   npm start
+   ```
+   Navega a `http://localhost:4200/`. La aplicación se recargará automáticamente al detectar cambios.
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+## 🏗️ Estructura del Proyecto
 
-```bash
-ng generate --help
-```
+El proyecto sigue una arquitectura basada en características (features) para facilitar la escalabilidad:
 
-## Building
+- `src/app/features`: Contiene los módulos principales como el simulador de mapas, gestión de datos y algoritmos.
+- `src/app/shared`: Componentes y servicios comunes utilizados en toda la aplicación.
+- `.github/workflows`: Configuración de la Integración Continua (CI).
 
-To build the project run:
+## 🧪 Pruebas y Calidad
 
-```bash
-ng build
-```
+Para asegurar la estabilidad del proyecto, contamos con un sistema de integración continua en GitHub Actions que verifica:
 
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
+- **Formato**: Uso de Prettier para un estilo de código consistente.
+- **Tests**: Ejecución de pruebas unitarias.
+- **Build**: Verificación de compilación exitosa.
 
-## Running unit tests
-
-To execute unit tests with the [Vitest](https://vitest.dev/) test runner, use the following command:
-
-```bash
-ng test
-```
-
-## Running end-to-end tests
-
-For end-to-end (e2e) testing, run:
+Ejecutar tests localmente:
 
 ```bash
-ng e2e
+npm test
 ```
 
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
+## 📄 Licencia
 
-## Additional Resources
-
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+Este proyecto ha sido desarrollado como parte de un TFG académico.

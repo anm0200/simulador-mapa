@@ -2,14 +2,14 @@ name: CI - Verificaciones TFG
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
   # 1. Apartado de Estructura y Frontend (HTML/Typescript/Format)
   calidad_estructura:
-    name: "📁 Calidad: Estructura y Formato"
+    name: '📁 Calidad: Estructura y Formato'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -25,7 +25,7 @@ jobs:
 
   # 2. Apartado de Diseño y Estilos (CSS)
   calidad_estilos:
-    name: "🎨 Calidad: Estilos y Diseño (CSS)"
+    name: '🎨 Calidad: Estilos y Diseño (CSS)'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -42,7 +42,7 @@ jobs:
 
   # 3. Apartado de Lógica y Mapas (Tests Unitarios)
   logica_funcionalidad:
-    name: "🧠 Lógica: Simulador y Mapas"
+    name: '🧠 Lógica: Simulador y Mapas'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -58,7 +58,7 @@ jobs:
 
   # 4. Apartado de Compilación Final
   build_proyecto:
-    name: "🏗️ Build: Compilación Global"
+    name: '🏗️ Build: Compilación Global'
     runs-on: ubuntu-latest
     needs: [calidad_estructura, calidad_estilos, logica_funcionalidad]
     steps:

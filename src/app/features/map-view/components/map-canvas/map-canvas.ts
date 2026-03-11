@@ -66,7 +66,7 @@ export class MapCanvas implements AfterViewInit, OnDestroy {
 
   constructor(
     @Inject(PLATFORM_ID) platformId: object,
-    private readonly cdr: ChangeDetectorRef
+    private readonly cdr: ChangeDetectorRef,
   ) {
     this.isBrowser = isPlatformBrowser(platformId);
   }
@@ -195,9 +195,7 @@ export class MapCanvas implements AfterViewInit, OnDestroy {
       this.simulationEnd = globalMaxTime;
       this.simulationCurrent = this.simulationStart;
 
-      const allBounds = this.L.featureGroup(
-        this.flights.map((f) => f.fullRouteLayer)
-      ).getBounds();
+      const allBounds = this.L.featureGroup(this.flights.map((f) => f.fullRouteLayer)).getBounds();
 
       if (allBounds.isValid()) {
         this.map.fitBounds(allBounds, { padding: [30, 30] });
@@ -304,24 +302,18 @@ export class MapCanvas implements AfterViewInit, OnDestroy {
         weight: 2,
       });
 
-      const segmentIndex = this.findSegmentIndex(
-        flight.points,
-        this.simulationCurrent
-      );
+      const segmentIndex = this.findSegmentIndex(flight.points, this.simulationCurrent);
 
       const pointA = flight.points[segmentIndex];
       const pointB = flight.points[Math.min(segmentIndex + 1, flight.points.length - 1)];
 
       const duration = pointB.timestamp - pointA.timestamp;
-      const ratio =
-        duration <= 0 ? 0 : (this.simulationCurrent - pointA.timestamp) / duration;
+      const ratio = duration <= 0 ? 0 : (this.simulationCurrent - pointA.timestamp) / duration;
 
       const currentLat = pointA.lat + (pointB.lat - pointA.lat) * ratio;
       const currentLng = pointA.lng + (pointB.lng - pointA.lng) * ratio;
 
-      const travelled = flight.points
-        .slice(0, segmentIndex + 1)
-        .map((p) => [p.lat, p.lng]);
+      const travelled = flight.points.slice(0, segmentIndex + 1).map((p) => [p.lat, p.lng]);
 
       travelled.push([currentLat, currentLng]);
 
@@ -335,12 +327,7 @@ export class MapCanvas implements AfterViewInit, OnDestroy {
       flight.planeMarker.setLatLng([currentLat, currentLng]);
       flight.planeMarker.setOpacity(1);
 
-      const bearing = this.getBearingDegrees(
-        pointA.lat,
-        pointA.lng,
-        pointB.lat,
-        pointB.lng
-      );
+      const bearing = this.getBearingDegrees(pointA.lat, pointA.lng, pointB.lat, pointB.lng);
 
       this.setPlaneRotation(flight.planeMarker, bearing);
     }
@@ -361,12 +348,7 @@ export class MapCanvas implements AfterViewInit, OnDestroy {
     return Math.max(0, points.length - 2);
   }
 
-  private getBearingDegrees(
-    lat1: number,
-    lon1: number,
-    lat2: number,
-    lon2: number
-  ): number {
+  private getBearingDegrees(lat1: number, lon1: number, lat2: number, lon2: number): number {
     const toRad = (value: number) => (value * Math.PI) / 180;
     const toDeg = (value: number) => (value * 180) / Math.PI;
 
