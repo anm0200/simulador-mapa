@@ -1,16 +1,16 @@
 import { TestBed } from '@angular/core/testing';
+import { GraphService } from './graph.service';
 
-import { Graph } from './graph';
-
-describe('Graph', () => {
-  let service: Graph;
+describe('GraphService', () => {
+  let service: GraphService;
 
   beforeEach(() => {
     TestBed.configureTestingModule({});
-    service = TestBed.inject(Graph);
+    service = TestBed.inject(GraphService);
   });
 
   it('should be created', () => {
     expect(service).toBeTruthy();
   });
 });
+
