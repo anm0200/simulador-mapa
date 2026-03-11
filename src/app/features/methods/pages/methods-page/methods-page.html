@@ -1,0 +1,191 @@
+<app-header></app-header>
+
+<div class="methods-page">
+  <section class="methods-panel">
+    <h2>Métodos de análisis</h2>
+    <p>
+      Estás visualizando datos de vuelos reales. Los extremos de las trayectorias se representan como Nodos y las rutas propias como Aristas.
+    </p>
+
+    <!-- Info del Grafo Base -->
+    <div class="graph-info" *ngIf="isGraphLoaded">
+      <div class="badge">Nodos: {{ totalNodes }}</div>
+      <div class="badge">Aristas: {{ totalEdges }}</div>
+    </div>
+    
+    <div class="clustering-panel" *ngIf="isGraphLoaded">
+      <label>
+        Agrupar nodos cercanos (km):
+        <input type="number" [(ngModel)]="currentRadius" min="0" max="500" step="10">
+      </label>
+      <button class="rebuild-btn" (click)="rebuildGraph()">Recalcular Grafo</button>
+    </div>
+    
+    <div class="loading-state" *ngIf="!isGraphLoaded">
+      Cargando grafo desde datos reales...
+    </div>
+
+    <div class="methods-buttons">
+      <button 
+        type="button" 
+        [class.active]="activeMethod === 'dijkstra'"
+        (click)="setMethod('dijkstra')"
+      >
+        Dijkstra (Caminos Mínimos)
+      </button>
+
+      <button 
+        type="button" 
+        [class.active]="activeMethod === 'kruskal'"
+        (click)="setMethod('kruskal')"
+      >
+        Kruskal (MST)
+      </button>
+    </div>
+    
+    <!-- Controles específicos de Dijkstra -->
+    <div class="method-controls" *ngIf="activeMethod === 'dijkstra'">
+      <div class="control-instructions">
+        <p>1. Haz clic en un Nodo Azul en el mapa para marcar el <b>[Origen]</b> (Verde).</p>
+        <p>2. Haz clic en otro Nodo Azul para marcar el <b>[Destino]</b> (Rojo).</p>
+        <p>3. Ejecuta el algoritmo para encontrar la secuencia de vuelos más corta.</p>
+      </div>
+
+      <div class="control-actions">
+        <button class="run-btn" (click)="runDijkstra()">Ejecutar Dijkstra</button>
+        <button class="reset-btn" (click)="resetDijkstra()">Limpiar Mapa</button>
+      </div>
+    </div>
+
+    <!-- Controles específicos de Kruskal -->
+    <div class="method-controls" *ngIf="activeMethod === 'kruskal'">
+      <div class="control-instructions">
+        <p>1. Opcional: Selecciona un <b>[Origen]</b> y un <b>[Destino]</b> en el mapa (Nodos Azul).</p>
+        <p>2. Ejecuta Kruskal para crear la red completa.</p>
+        <p>3. Tras calcularse, verás resaltada tu ruta fluyendo SOLO a través de los vuelos de la red mínima.</p>
+      </div>
+
+      <div class="control-actions">
+        <button class="run-btn default-algo" (click)="runKruskal()">Crear Red Mínima</button>
+        <button class="reset-btn" (click)="resetKruskal()">Limpiar Mapa</button>
+      </div>
+    </div>
+
+  </section>
+
+  <section class="methods-map">
+    <!-- Componente de Dijkstra con datos reales -->
+    <app-algorithm-map 
+      (graphLoaded)="onGraphLoaded($event)"
+      (simulationFinished)="onSimulationFinished($event)"
+      (kruskalFinished)="onKruskalFinished($event)"
+    ></app-algorithm-map>
+  </section>
+
+  <section class="methods-results">
+    <div class="result-card">
+      <h3>Resultado del método</h3>
+      
+      <div *ngIf="activeMethod === 'dijkstra'" class="dijkstra-results">
+        <div class="stat-row">
+          <span class="stat-label">Estado:</span>
+          <span class="stat-value" *ngIf="dijkstraDistance === null">Esperando ejecución...</span>
+          <span class="stat-value success" *ngIf="dijkstraDistance !== null">Completado</span>
+        </div>
+
+        <div class="stat-row" *ngIf="dijkstraDistance !== null">
+          <span class="stat-label">Distancia Total:</span>
+          <span class="stat-value">{{ dijkstraDistance | number:'1.0-2' }} km</span>
+        </div>
+
+        <div class="stat-row" *ngIf="dijkstraVisitedCount !== null">
+          <span class="stat-label">Nodos Explorados:</span>
+          <span class="stat-value">{{ dijkstraVisitedCount }} nodos</span>
+        </div>
+
+        <div class="stat-row" *ngIf="estimatedTimeHours !== null">
+          <span class="stat-label">Tiempo Estimado (ETA):</span>
+          <span class="stat-value highlight">{{ estimatedTimeHours | number:'1.0-1' }} horas</span>
+        </div>
+
+        <div class="path-breakdown" *ngIf="pathDetails.length > 0">
+          <h4>Desglose de la Ruta</h4>
+          <div class="path-step" *ngFor="let step of pathDetails; let i = index" [ngClass]="step.type">
+            <div class="step-index">{{ i + 1 }}</div>
+            <div class="step-details">
+              <strong>{{ step.label }}</strong>
+              <small>{{ step.distance | number:'1.0-0' }} km • {{ step.time | number:'1.0-1' }}h</small>
+            </div>
+            <div class="step-icon">
+              <span *ngIf="step.type === 'flight'">✈️</span>
+              <span *ngIf="step.type === 'transfer'">🚆</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Resultados de Kruskal -->
+      <div *ngIf="activeMethod === 'kruskal'" class="dijkstra-results">
+        <div class="stat-row">
+          <span class="stat-label">Estado:</span>
+          <span class="stat-value" *ngIf="kruskalTotalWeight === null">Esperando ejecución...</span>
+          <span class="stat-value success" *ngIf="kruskalTotalWeight !== null">Completado</span>
+        </div>
+
+        <div class="stat-row" *ngIf="kruskalTotalWeight !== null">
+          <span class="stat-label">Coste Global MST:</span>
+          <span class="stat-value">{{ kruskalTotalWeight | number:'1.0-2' }} km</span>
+        </div>
+
+        <div class="stat-row" *ngIf="kruskalEdgeCount !== null">
+          <span class="stat-label">Aristas Conectadas:</span>
+          <span class="stat-value">{{ kruskalEdgeCount }} vuelos esenciales</span>
+        </div>
+
+        <!-- Distancia de ruta MST -->
+        <div class="stat-row" *ngIf="kruskalPathWeight !== null && kruskalPathWeight > 0">
+          <span class="stat-label">Ruta A ➔ B (por MST):</span>
+          <span class="stat-value highlight">{{ kruskalPathWeight | number:'1.0-2' }} km</span>
+        </div>
+
+        <!-- Desglose de ruta específica MST -->
+        <div class="path-breakdown" *ngIf="kruskalPathDetails.length > 0">
+          <h4>Tu Ruta dentro del MST</h4>
+          <div class="path-step" *ngFor="let step of kruskalPathDetails; let i = index" [ngClass]="step.type">
+            <div class="step-index">{{ i + 1 }}</div>
+            <div class="step-details">
+              <strong>{{ step.label }}</strong>
+              <small>{{ step.distance | number:'1.0-0' }} km • {{ step.time | number:'1.0-1' }}h</small>
+            </div>
+            <div class="step-icon">
+              <span *ngIf="step.type === 'flight'">✈️</span>
+              <span *ngIf="step.type === 'transfer'">🚆</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Desglose global MST en un details tag -->
+        <details class="mst-edges-details" *ngIf="kruskalEdgesDetails.length > 0">
+          <summary>Ver todos los {{ kruskalEdgesDetails.length }} tramos del MST base</summary>
+          <div class="path-breakdown">
+            <div class="path-step" *ngFor="let step of kruskalEdgesDetails; let i = index" [ngClass]="step.type">
+              <div class="step-index">{{ i + 1 }}</div>
+              <div class="step-details">
+                <strong>{{ step.label }}</strong>
+                <small>{{ step.distance | number:'1.0-0' }} km</small>
+              </div>
+              <div class="step-icon">
+                <span *ngIf="step.type === 'flight'">✈️</span>
+                <span *ngIf="step.type === 'transfer'">🚆</span>
+              </div>
+            </div>
+          </div>
+        </details>
+      </div>
+
+      <div *ngIf="activeMethod === 'none'">
+        <p>Selecciona un método en el panel izquierdo para ver los resultados aquí.</p>
+      </div>
+    </div>
+  </section>
+</div>

@@ -39,6 +39,11 @@ testem.log
 /typings
 __screenshots__/
 
+# Project specific
+error.log
+build_out.txt
+
 # System files
 .DS_Store
 Thumbs.db
+

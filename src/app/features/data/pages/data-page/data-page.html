@@ -1,0 +1,190 @@
+<app-header></app-header>
+
+<div class="data-page">
+  <section class="data-intro">
+    <h2>Análisis de Vuelos</h2>
+    <p>
+      Dataset completo de trayectorias. Filtra por identificadores reales, rangos de altitud, distancia o consumo para analizar el tráfico.
+    </p>
+
+    <div class="kpi-dashboard" *ngIf="!isLoading && !loadError && flights.length > 0">
+      <div class="kpi-card">
+        <span class="kpi-label">Vuelo más largo</span>
+        <span class="kpi-value">{{ kpiLongestFlight }}</span>
+      </div>
+      <div class="kpi-card">
+        <span class="kpi-label">Altitud media red</span>
+        <span class="kpi-value">{{ kpiAvgAltitude }}</span>
+      </div>
+      <div class="kpi-card highlight">
+        <span class="kpi-label">Consumo estimado</span>
+        <span class="kpi-value">{{ kpiTotalConsumptionKg | number:'1.0-0' }} Kg CO2</span>
+      </div>
+    </div>
+
+    <!-- Gráfico de Categorización -->
+    <div class="dashboard-charts" *ngIf="!isLoading && !loadError && flightCategories.length > 0">
+      <div class="category-chart-container">
+        <h3>Alcance de Vuelos (Proporción)</h3>
+        <div class="category-bar-stack">
+          <div 
+            *ngFor="let cat of flightCategories" 
+            class="category-segment" 
+            [style.width.%]="cat.percentage"
+            [style.background-color]="cat.color"
+            [title]="cat.label + ': ' + cat.count + ' vuelos'"
+          >
+            <span class="segment-label" *ngIf="cat.percentage > 10">{{ cat.percentage | number:'1.0-0' }}%</span>
+          </div>
+        </div>
+        <div class="chart-legend">
+          <div *ngFor="let cat of flightCategories" class="legend-item">
+            <span class="legend-dot" [style.background-color]="cat.color"></span>
+            <span class="legend-label">{{ cat.label }} ({{ cat.count }})</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="data-mega-filters data-state-card" *ngIf="!isLoading && !loadError">
+    <div class="filter-header">
+      <i class="filter-icon">🔍</i>
+      <h3>Panel de Búsqueda y Filtros Avanzados</h3>
+      <span class="results-badge">{{ filteredAndSortedFlights.length }} / {{ flights.length }} vuelos</span>
+    </div>
+
+    <div class="filter-grid">
+      <!-- Fila 1: Búsqueda y Horas -->
+      <div class="filter-group full-width">
+        <label>Buscador (Callsign / ID Real):</label>
+        <input type="text" [(ngModel)]="searchTerm" (ngModelChange)="onFilterChange()" placeholder="Ej: IBE123, VLG2024...">
+      </div>
+
+      <div class="filter-group">
+        <label>Hora Inicio (0-23):</label>
+        <input type="number" [(ngModel)]="filterStartHour" (ngModelChange)="onFilterChange()" min="0" max="23">
+      </div>
+      <div class="filter-group">
+        <label>Hora Fin (0-23):</label>
+        <input type="number" [(ngModel)]="filterEndHour" (ngModelChange)="onFilterChange()" min="0" max="23">
+      </div>
+
+      <!-- Fila 2: Duración y Altitud -->
+      <div class="filter-group">
+        <label>Duración Mín (min):</label>
+        <input type="number" [(ngModel)]="filterMinDuration" (ngModelChange)="onFilterChange()" min="0">
+      </div>
+      <div class="filter-group">
+        <label>Duración Máx (min):</label>
+        <input type="number" [(ngModel)]="filterMaxDuration" (ngModelChange)="onFilterChange()" min="0">
+      </div>
+      <div class="filter-group">
+        <label>Altitud Mín (m):</label>
+        <input type="number" [(ngModel)]="filterMinAltitude" (ngModelChange)="onFilterChange()" min="0">
+      </div>
+      <div class="filter-group">
+        <label>Altitud Máx (m):</label>
+        <input type="number" [(ngModel)]="filterMaxAltitude" (ngModelChange)="onFilterChange()" min="0">
+      </div>
+
+      <!-- Fila 3: Distancia y Puntos -->
+      <div class="filter-group">
+        <label>Distancia Mín (km):</label>
+        <input type="number" [(ngModel)]="filterMinDistance" (ngModelChange)="onFilterChange()" min="0">
+      </div>
+      <div class="filter-group">
+        <label>Distancia Máx (km):</label>
+        <input type="number" [(ngModel)]="filterMaxDistance" (ngModelChange)="onFilterChange()" min="0">
+      </div>
+      <div class="filter-group">
+        <label>Puntos Mín:</label>
+        <input type="number" [(ngModel)]="filterMinPoints" (ngModelChange)="onFilterChange()" min="0">
+      </div>
+      <div class="filter-group">
+        <label>Puntos Máx:</label>
+        <input type="number" [(ngModel)]="filterMaxPoints" (ngModelChange)="onFilterChange()" min="0">
+      </div>
+    </div>
+  </section>
+
+  <section class="data-view-switch">
+    <button type="button" [class.active]="currentView === 'table'" (click)="setView('table')">Vista tabla</button>
+    <button type="button" [class.active]="currentView === 'cards'" (click)="setView('cards')">Vista tarjetas</button>
+  </section>
+
+  <section class="data-state-card" *ngIf="isLoading">
+    <p>Cargando dataset de vuelos...</p>
+  </section>
+
+  <section class="data-state-card data-state-card--error" *ngIf="loadError">
+    <p>{{ loadError }}</p>
+  </section>
+
+  <section class="data-table-card" *ngIf="!isLoading && !loadError && currentView === 'table'">
+    <div class="table-scroll">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th (click)="sortBy('id')" class="sortable" [class.active-sort]="sortColumn === 'id'">ID <span *ngIf="sortColumn === 'id'">{{ sortDirection === 'asc' ? '↑' : '↓' }}</span></th>
+            <th>Trayectoria</th>
+            <th>Detección (Ini/Fin)</th>
+            <th (click)="sortBy('duration')" class="sortable" [class.active-sort]="sortColumn === 'duration'">Duración <span *ngIf="sortColumn === 'duration'">{{ sortDirection === 'asc' ? '↑' : '↓' }}</span></th>
+            <th (click)="sortBy('distance')" class="sortable" [class.active-sort]="sortColumn === 'distance'">Distancia <span *ngIf="sortColumn === 'distance'">{{ sortDirection === 'asc' ? '↑' : '↓' }}</span></th>
+            <th (click)="sortBy('maxAltitude')" class="sortable" [class.active-sort]="sortColumn === 'maxAltitude'">Alt. Máx <span *ngIf="sortColumn === 'maxAltitude'">{{ sortDirection === 'asc' ? '↑' : '↓' }}</span></th>
+            <th>Puntos</th>
+            <th>Acción</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let flight of filteredAndSortedFlights; trackBy: trackByFlightId">
+            <td>{{ flight.id }}</td>
+            <td><small>{{ flight.firstPointLabel }} <br> {{ flight.lastPointLabel }}</small></td>
+            <td><small>{{ flight.firstDetectionLabel }} <br> {{ flight.lastDetectionLabel }}</small></td>
+            <td>{{ flight.observedDurationLabel }}</td>
+            <td>{{ flight.totalDistanceKm | number:'1.1-1' }} km</td>
+            <td>{{ formatAltitude(flight.maxAltitude) }}</td>
+            <td>{{ flight.pointsCount }}</td>
+            <td>
+              <button type="button" class="btn-action" (click)="openTrajectoryModal(flight)">Analizar</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="data-cards" *ngIf="!isLoading && !loadError && currentView === 'cards'">
+    <article class="flight-card" *ngFor="let flight of filteredAndSortedFlights; trackBy: trackByFlightId">
+      <div class="flight-card__header">
+        <h3>{{ flight.id }}</h3>
+        <span class="flight-card__duration">{{ flight.observedDurationLabel }}</span>
+      </div>
+      <p><strong>Ruta:</strong> {{ flight.firstPointLabel }} → {{ flight.lastPointLabel }}</p>
+      <p><strong>Distancia:</strong> {{ flight.totalDistanceKm | number:'1.1-1' }} km</p>
+      <p><strong>Altitud Media:</strong> {{ formatAltitude(flight.avgAltitude) }}</p>
+      <p><strong>Puntos:</strong> {{ flight.pointsCount }} registrados</p>
+      <button type="button" class="btn-primary" (click)="openTrajectoryModal(flight)">Ver Trayectoria</button>
+    </article>
+  </section>
+</div>
+
+<!-- Modal Trayectoria -->
+<div class="trajectory-modal-backdrop" *ngIf="selectedFlight" (click)="closeTrajectoryModal()">
+  <div class="trajectory-modal" (click)="$event.stopPropagation()">
+    <div class="trajectory-modal__header">
+      <div>
+        <h3>Vuelo: {{ selectedFlight.id }}</h3>
+        <p>{{ selectedFlight.firstPointLabel }} → {{ selectedFlight.lastPointLabel }}</p>
+      </div>
+      <button type="button" class="close-button" (click)="closeTrajectoryModal()">Cerrar</button>
+    </div>
+    <div class="trajectory-modal__details">
+      <span><strong>Tiempo:</strong> {{ selectedFlight.observedDurationLabel }}</span>
+      <span><strong>Distancia:</strong> {{ selectedFlight.totalDistanceKm | number:'1.1-1' }} km</span>
+      <span><strong>Alt. Máx:</strong> {{ formatAltitude(selectedFlight.maxAltitude) }}</span>
+      <span><strong>Puntos:</strong> {{ selectedFlight.pointsCount }}</span>
+    </div>
+    <div #trajectoryMapContainer class="trajectory-map shadow-inner"></div>
+  </div>
+</div>

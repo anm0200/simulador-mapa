@@ -1,0 +1,22 @@
+<header class="header">
+  <a class="header__left header__home-link" routerLink="/">
+    <div class="header__logo">SM</div>
+
+    <div class="header__brand">
+      <h1>Simulador de Mapa</h1>
+      <p>Plataforma de visualización y análisis</p>
+    </div>
+  </a>
+
+  <nav class="header__nav">
+    <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
+      Inicio
+    </a>
+    <a routerLink="/methods" routerLinkActive="active">
+      Métodos
+    </a>
+    <a routerLink="/data" routerLinkActive="active">
+      Datos
+    </a>
+  </nav>
+</header>

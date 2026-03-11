@@ -1,0 +1,332 @@
+:host {
+  display: block;
+  min-height: 100vh;
+  background: #f6f8fb;
+  color: #111827;
+}
+
+.methods-page {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 24px 24px 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.methods-panel,
+.result-card {
+  padding: 20px;
+  border-radius: 20px;
+  background: #ffffff;
+  border: 1px solid #edf0f4;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.04);
+}
+
+.methods-panel h2,
+.result-card h3 {
+  margin-top: 0;
+  margin-bottom: 10px;
+}
+
+.methods-panel p,
+.result-card p {
+  margin-top: 0;
+  color: #6b7280;
+  line-height: 1.6;
+}
+
+.methods-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.methods-buttons button {
+  padding: 10px 16px;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  background: #fff;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.methods-map {
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+  height: 600px;
+}
+
+.methods-map app-algorithm-map {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* --- Nuevos Estilos para Dijkstra --- */
+.graph-info {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.badge {
+  background: #e0e7ff;
+  color: #4338ca;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.loading-state {
+  color: #fbbf24;
+  font-weight: 500;
+  margin-bottom: 15px;
+}
+
+.methods-buttons button.active {
+  background: #3b82f6;
+  color: white;
+  border-color: #2563eb;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.method-controls {
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.control-instructions p {
+  font-size: 0.9rem;
+  margin-bottom: 8px;
+}
+
+.control-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 15px;
+}
+
+.run-btn {
+  background: #10b981;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.run-btn:hover {
+  background: #059669;
+}
+
+.reset-btn {
+  background: #ef4444;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.reset-btn:hover {
+  background: #dc2626;
+}
+
+/* Estilos de Resultados */
+.dijkstra-results {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.stat-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px;
+  background: #f8fafc;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+}
+
+.stat-label {
+  font-weight: 600;
+  color: #475569;
+}
+
+.stat-value {
+  font-size: 1.1rem;
+  font-weight: bold;
+  color: #0f172a;
+}
+
+.stat-value.success {
+  color: #10b981;
+}
+
+.stat-value.highlight {
+  color: #3b82f6;
+}
+
+/* Desglose de la ruta */
+.path-breakdown {
+  margin-top: 16px;
+  border-top: 2px dashed #cbd5e1;
+  padding-top: 16px;
+}
+
+.path-breakdown h4 {
+  margin-top: 0;
+  margin-bottom: 12px;
+  color: #334155;
+  font-size: 1rem;
+}
+
+.path-step {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px;
+  background: white;
+  border-radius: 8px;
+  margin-bottom: 8px;
+  border: 1px solid #e2e8f0;
+  border-left: 4px solid #94a3b8;
+}
+
+.path-step.flight {
+  border-left-color: #3b82f6; /* Azul para vuelos */
+}
+
+.path-step.transfer {
+  border-left-color: #f59e0b; /* Naranja para transbordos */
+}
+
+.step-index {
+  background: #f1f5f9;
+  color: #64748b;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  font-weight: bold;
+}
+
+.step-details {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.step-details strong {
+  font-size: 0.9rem;
+  color: #1e293b;
+}
+
+.step-details small {
+  color: #64748b;
+  font-size: 0.8rem;
+}
+
+.step-icon {
+  font-size: 1.2rem;
+}
+
+/* Panel de clustering */
+.clustering-panel {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #f8fafc;
+  padding: 12px;
+  border-radius: 12px;
+  margin-bottom: 24px;
+  border: 1px solid #e2e8f0;
+}
+
+.clustering-panel label {
+  display: flex;
+  flex-direction: column;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #475569;
+}
+
+.clustering-panel input {
+  padding: 6px 10px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  margin-top: 4px;
+  width: 100px;
+}
+
+.rebuild-btn {
+  background: #3b82f6;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 20px;
+  transition: background 0.2s;
+}
+
+.rebuild-btn:hover {
+  background: #2563eb;
+}
+
+.mst-edges-details {
+  margin-top: 16px;
+  border-top: 2px dashed #cbd5e1;
+  padding-top: 16px;
+  cursor: pointer;
+}
+
+.mst-edges-details summary {
+  font-weight: 600;
+  color: #3b82f6;
+  margin-bottom: 8px;
+  outline: none;
+}
+
+.mst-edges-details summary:hover {
+  text-decoration: underline;
+}
+
+.mst-edges-details .path-breakdown {
+  max-height: 400px;
+  overflow-y: auto;
+  padding-right: 5px;
+  margin-top: 8px;
+  border-top: none;
+  padding-top: 0;
+}
+
+/* Custom scrollbar para la lista de aristas */
+.mst-edges-details .path-breakdown::-webkit-scrollbar {
+  width: 6px;
+}
+.mst-edges-details .path-breakdown::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 4px;
+}
+.mst-edges-details .path-breakdown::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+.mst-edges-details .path-breakdown::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}

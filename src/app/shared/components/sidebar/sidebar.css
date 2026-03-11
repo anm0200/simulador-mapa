@@ -1,0 +1,45 @@
+.sidebar-box {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.sidebar-intro {
+  padding: 4px 4px 0 4px;
+}
+
+.sidebar-intro h2 {
+  margin: 0;
+  font-size: 1.3rem;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+}
+
+.sidebar-intro p {
+  margin: 8px 0 0;
+  color: #6b7280;
+  line-height: 1.5;
+  font-size: 0.95rem;
+}
+
+.panel-card {
+  padding: 18px;
+  border-radius: 20px;
+  background: #ffffff;
+  border: 1px solid #edf0f4;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.04);
+}
+
+.panel-card h3 {
+  margin: 0 0 10px;
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.panel-card p {
+  margin: 0;
+  color: #6b7280;
+  line-height: 1.6;
+  font-size: 0.95rem;
+}

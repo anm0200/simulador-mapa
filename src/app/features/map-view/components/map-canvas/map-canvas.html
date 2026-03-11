@@ -1,0 +1,70 @@
+<section class="map-wrapper">
+  <div class="map-toolbar">
+    <div class="map-toolbar__left">
+      <h2>Visualización principal</h2>
+      <p>Simulación animada de trayectorias aéreas.</p>
+    </div>
+
+    <div class="map-toolbar__actions">
+      <button type="button" (click)="togglePlayback()">
+        {{ isPlaying ? 'Pausar' : 'Reproducir' }}
+      </button>
+
+      <button type="button" (click)="restartSimulation()">
+        Reiniciar
+      </button>
+
+      <label class="speed-control">
+        <span>Velocidad</span>
+        <select [value]="speedMultiplier" (change)="changeSpeed($any($event.target).value)">
+          @for (speed of speedOptions; track speed) {
+            <option [value]="speed">x{{ speed }}</option>
+          }
+        </select>
+      </label>
+    </div>
+  </div>
+
+  <div class="map-surface">
+    <div #mapContainer class="map-container"></div>
+
+    <div class="simulation-panel">
+      <div class="simulation-panel__row">
+        <span class="label">Estado</span>
+        <span class="value" [class.paused]="!isPlaying">
+          {{ isPlaying ? 'Reproduciendo' : 'Pausado' }}
+        </span>
+      </div>
+
+      <div class="simulation-panel__row">
+        <span class="label">Tiempo simulado</span>
+        <span class="value">{{ formattedSimulationTime }}</span>
+      </div>
+
+      <div class="simulation-panel__row">
+        <span class="label">Progreso</span>
+        <span class="value">{{ simulationProgress }}%</span>
+      </div>
+
+      <div class="simulation-panel__row">
+        <span class="label">Velocidad</span>
+        <span class="value">x{{ speedMultiplier }}</span>
+      </div>
+
+      <div class="simulation-panel__row">
+        <span class="label">Vuelos activos</span>
+        <span class="value">{{ activeFlightsCount }}</span>
+      </div>
+
+      <div class="simulation-panel__row">
+        <span class="label">Vuelos totales</span>
+        <span class="value">{{ totalFlightsCount }}</span>
+      </div>
+
+      <div class="simulation-panel__row">
+        <span class="label">Loop</span>
+        <span class="value">{{ loopCount }}</span>
+      </div>
+    </div>
+  </div>
+</section>

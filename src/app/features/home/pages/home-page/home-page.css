@@ -1,0 +1,57 @@
+:host {
+  display: block;
+  min-height: 100vh;
+  background: #f6f8fb;
+  color: #111827;
+}
+
+.home-page {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 24px 24px 40px;
+}
+
+.home-map {
+  margin-bottom: 32px;
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+}
+
+.home-info {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+}
+
+.info-card {
+  padding: 20px;
+  border-radius: 20px;
+  background: #ffffff;
+  border: 1px solid #edf0f4;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.04);
+}
+
+.info-card h2,
+.info-card h3 {
+  margin-top: 0;
+  margin-bottom: 10px;
+}
+
+.info-card p {
+  margin: 0;
+  color: #6b7280;
+  line-height: 1.65;
+}
+
+@media (max-width: 900px) {
+  .info-grid {
+    grid-template-columns: 1fr;
+  }
+}
