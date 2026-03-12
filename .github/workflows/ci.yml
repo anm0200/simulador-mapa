@@ -21,11 +21,11 @@ jobs:
       - name: Instalación Limpia
         run: npm ci
       - name: Verificar Formato (Prettier)
-        run: npx prettier --check .
+        run: npx prettier --check src .github
 
-  # 2. Apartado de Diseño y Estilos (CSS)
+  # 2. Apartado de Diseno y Estilos (CSS)
   calidad_estilos:
-    name: 'Calidad: Estilos y Diseño (CSS)'
+    name: 'Calidad: Estilos y Diseno (CSS)'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -34,15 +34,14 @@ jobs:
         with:
           node-version: '20'
           cache: 'npm'
-      - name: Instalación Limpia
+      - name: Instalacion Limpia
         run: npm ci
       - name: Verificar Lint de CSS
-        # Aquí podrías añadir stylelint en el futuro, por ahora usamos prettier para CSS también
-        run: npx prettier --check "**/*.css"
+        run: npx prettier --check "src/**/*.css"
 
-  # 3. Apartado de Lógica y Mapas (Tests Unitarios)
+  # 3. Apartado de Logica y Mapas (Tests Unitarios)
   logica_funcionalidad:
-    name: 'Lógica: Simulador y Mapas'
+    name: 'Logica: Simulador y Mapas'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -51,10 +50,10 @@ jobs:
         with:
           node-version: '20'
           cache: 'npm'
-      - name: Instalación Limpia
+      - name: Instalacion Limpia
         run: npm ci
       - name: Ejecutar Tests de Logica (Vitest)
-        run: npx vitest run --globals --environment jsdom --setupFiles src/test-setup.ts
+        run: npx vitest run --config vitest.config.ts
 
   # 4. Apartado de Compilación Final
   build_proyecto:
