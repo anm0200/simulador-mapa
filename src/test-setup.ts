@@ -5,7 +5,7 @@ import { BrowserTestingModule, platformBrowserTesting } from '@angular/platform-
 
 /**
  * Inicializa el entorno de pruebas de Angular.
- * Esta función debe ser llamada en cada archivo .spec.ts para garantizar 
+ * Esta función debe ser llamada en cada archivo .spec.ts para garantizar
  * que TestBed esté listo, especialmente en entornos basados en Vitest y AnalogJS.
  */
 export const setupTestEnvironment = () => {

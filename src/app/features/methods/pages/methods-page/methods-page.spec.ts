@@ -12,7 +12,7 @@ describe('MethodsPage', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [MethodsPage],
-      providers: [provideRouter([])]
+      providers: [provideRouter([])],
     }).compileComponents();
 
     fixture = TestBed.createComponent(MethodsPage);

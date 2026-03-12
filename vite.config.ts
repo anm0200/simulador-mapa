@@ -13,7 +13,12 @@ export default defineConfig({
     exclude: [
       '**/node_modules/**',
       '**/dist/**',
-      'src/app/**/*.spec.ts', // Excluimos por ahora mientras se definen los providers de cada componente
+      // Plan de Activación Gradual:
+      // Excluimos temporalmente componentes UI que necesitan providers específicos de Angular (Router, HttpClient, etc.)
+      // Esto garantiza que el CI del TFG esté siempre en VERDE.
+      'src/app/features/**/pages/**/*.spec.ts',
+      'src/app/features/**/components/**/*.spec.ts',
+      'src/app/shared/components/**/*.spec.ts',
     ],
   },
 });
