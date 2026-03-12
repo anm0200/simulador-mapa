@@ -1,3 +1,5 @@
+import { setupTestEnvironment } from '../../../../../test-setup';
+setupTestEnvironment();
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { MapCanvas } from './map-canvas';

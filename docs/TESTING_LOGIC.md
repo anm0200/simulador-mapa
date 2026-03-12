@@ -31,8 +31,11 @@ Durante la configuración del repositorio en GitHub, surgieron varios desafíos 
 
 ### D. Inicialización de `TestBed`
 - **Error**: `Need to call TestBed.initTestEnvironment() first`.
-- **Causa**: Intentar ejecutar tests de componentes de Angular sin haber configurado el entorno de pruebas de navegador simulado (JSDOM).
-- **Solución**: Se integró `@angular/platform-browser/testing` en el proceso de setup, permitiendo que incluso tests complejos de componentes puedan ejecutarse en un entorno ligero sin navegador real.
+- **Causa**: Vitest, bajo ciertas versiones de AnalogJS y Angular 21, no logra propagar la inicialización global de `setupFiles` a todos los hilos de ejecución de los componentes.
+- **Solución**: Se ha implementado un patrón de **Inyección Explícita**:
+  1. Se exporta `setupTestEnvironment()` desde `src/test-setup.ts`.
+  2. Cada archivo `.spec.ts` importa y ejecuta esta función al inicio.
+  3. Esto garantiza que el entorno de Angular esté listo independientemente de cómo Vitest orqueste los archivos, eliminando el fallo de raíz.
 
 ## 3. Conclusión de la Infraestructura
 

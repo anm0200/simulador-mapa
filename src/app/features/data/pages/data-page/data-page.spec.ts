@@ -1,3 +1,5 @@
+import { setupTestEnvironment } from '../../../../../test-setup';
+setupTestEnvironment();
 import { describe, it, expect, beforeEach } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 

@@ -1,3 +1,5 @@
+import { setupTestEnvironment } from '../../../../test-setup';
+setupTestEnvironment();
 import { TestBed } from '@angular/core/testing';
 import { GraphService } from './graph.service';
 

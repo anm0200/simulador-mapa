@@ -1,4 +1,7 @@
+import { setupTestEnvironment } from '../../../../../test-setup';
+setupTestEnvironment();
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
 
 import { MethodsPage } from './methods-page';
 
@@ -9,6 +12,7 @@ describe('MethodsPage', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [MethodsPage],
+      providers: [provideRouter([])]
     }).compileComponents();
 
     fixture = TestBed.createComponent(MethodsPage);
