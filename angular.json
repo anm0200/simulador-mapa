@@ -74,7 +74,6 @@
         "test": {
           "builder": "@angular/build:unit-test"
         }
-
       }
     }
   }
