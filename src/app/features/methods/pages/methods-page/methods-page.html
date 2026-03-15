@@ -35,6 +35,14 @@
 
       <button
         type="button"
+        [class.active]="activeMethod === 'aStar'"
+        (click)="setMethod('aStar')"
+      >
+        Algoritmo A* (Heurística)
+      </button>
+
+      <button
+        type="button"
         [class.active]="activeMethod === 'kruskal'"
         (click)="setMethod('kruskal')"
       >
@@ -42,12 +50,20 @@
       </button>
     </div>
 
+    <!-- Panel Didáctico -->
+    <div class="didactic-section" *ngIf="activeMethod !== 'none'">
+      <div class="explanation-card">
+        <h4>{{ methodExplanations[activeMethod].title }}</h4>
+        <p class="logic"><strong>Lógica:</strong> {{ methodExplanations[activeMethod].logic }}</p>
+        <p class="usage"><strong>Uso:</strong> {{ methodExplanations[activeMethod].usage }}</p>
+      </div>
+    </div>
+
     <!-- Controles específicos de Dijkstra -->
     <div class="method-controls" *ngIf="activeMethod === 'dijkstra'">
       <div class="control-instructions">
-        <p>1. Haz clic en un Nodo Azul en el mapa para marcar el <b>[Origen]</b> (Verde).</p>
-        <p>2. Haz clic en otro Nodo Azul para marcar el <b>[Destino]</b> (Rojo).</p>
-        <p>3. Ejecuta el algoritmo para encontrar la secuencia de vuelos más corta.</p>
+        <p>1. Selecciona <b>[Origen]</b> (Verde) y <b>[Destino]</b> (Rojo) en el mapa.</p>
+        <p>2. El algoritmo explorará el mapa de forma exhaustiva para encontrar la mejor ruta.</p>
       </div>
 
       <div class="control-actions">
@@ -56,17 +72,26 @@
       </div>
     </div>
 
+    <!-- Controles específicos de A* -->
+    <div class="method-controls" *ngIf="activeMethod === 'aStar'">
+      <div class="control-instructions">
+        <p>1. Selecciona <b>[Origen]</b> (Verde) y <b>[Destino]</b> (Rojo) en el mapa.</p>
+        <p>
+          2. A* usará la distancia al objetivo para ignorar rutas que se alejan, siendo más eficiente.
+        </p>
+      </div>
+
+      <div class="control-actions">
+        <button class="run-btn astar-btn" (click)="runAStar()">Ejecutar A*</button>
+        <button class="reset-btn" (click)="resetAStar()">Limpiar Mapa</button>
+      </div>
+    </div>
+
     <!-- Controles específicos de Kruskal -->
     <div class="method-controls" *ngIf="activeMethod === 'kruskal'">
       <div class="control-instructions">
-        <p>
-          1. Opcional: Selecciona un <b>[Origen]</b> y un <b>[Destino]</b> en el mapa (Nodos Azul).
-        </p>
-        <p>2. Ejecuta Kruskal para crear la red completa.</p>
-        <p>
-          3. Tras calcularse, verás resaltada tu ruta fluyendo SOLO a través de los vuelos de la red
-          mínima.
-        </p>
+        <p>1. Ejecuta Kruskal para encontrar los vuelos esenciales que conectan toda la red.</p>
+        <p>2. Si marcas origen y destino, verás cómo se viaja entre ellos usando solo esa red.</p>
       </div>
 
       <div class="control-actions">
@@ -82,6 +107,7 @@
       (graphLoaded)="onGraphLoaded($event)"
       (simulationFinished)="onSimulationFinished($event)"
       (kruskalFinished)="onKruskalFinished($event)"
+      (simulationFinished)="onAStarFinished($event)"
     ></app-algorithm-map>
   </section>
 
@@ -89,6 +115,7 @@
     <div class="result-card">
       <h3>Resultado del método</h3>
 
+      <!-- Resultados de Dijkstra -->
       <div *ngIf="activeMethod === 'dijkstra'" class="dijkstra-results">
         <div class="stat-row">
           <span class="stat-label">Estado:</span>
@@ -103,7 +130,7 @@
 
         <div class="stat-row" *ngIf="dijkstraVisitedCount !== null">
           <span class="stat-label">Nodos Explorados:</span>
-          <span class="stat-value">{{ dijkstraVisitedCount }} nodos</span>
+          <span class="stat-value text-orange">{{ dijkstraVisitedCount }} nodos</span>
         </div>
 
         <div class="stat-row" *ngIf="estimatedTimeHours !== null">
@@ -116,6 +143,52 @@
           <div
             class="path-step"
             *ngFor="let step of pathDetails; let i = index"
+            [ngClass]="step.type"
+          >
+            <div class="step-index">{{ i + 1 }}</div>
+            <div class="step-details">
+              <strong>{{ step.label }}</strong>
+              <small
+                >{{ step.distance | number: '1.0-0' }} km •
+                {{ step.time | number: '1.0-1' }}h</small
+              >
+            </div>
+            <div class="step-icon">
+              <span *ngIf="step.type === 'flight'">✈️</span>
+              <span *ngIf="step.type === 'transfer'">🚆</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Resultados de A* -->
+      <div *ngIf="activeMethod === 'aStar'" class="dijkstra-results">
+        <div class="stat-row">
+          <span class="stat-label">Estado:</span>
+          <span class="stat-value" *ngIf="aStarDistance === null">Esperando ejecución...</span>
+          <span class="stat-value success" *ngIf="aStarDistance !== null">Completado</span>
+        </div>
+
+        <div class="stat-row" *ngIf="aStarDistance !== null">
+          <span class="stat-label">Distancia Total:</span>
+          <span class="stat-value">{{ aStarDistance | number: '1.0-2' }} km</span>
+        </div>
+
+        <div class="stat-row" *ngIf="aStarVisitedCount !== null">
+          <span class="stat-label">Nodos Explorados:</span>
+          <span class="stat-value text-cyan">{{ aStarVisitedCount }} nodos</span>
+        </div>
+
+        <div class="stat-row" *ngIf="aStarEstimatedTime !== null">
+          <span class="stat-label">Tiempo Estimado (ETA):</span>
+          <span class="stat-value highlight">{{ aStarEstimatedTime | number: '1.0-1' }} horas</span>
+        </div>
+
+        <div class="path-breakdown" *ngIf="aStarPathDetails.length > 0">
+          <h4>Desglose de la Ruta</h4>
+          <div
+            class="path-step"
+            *ngFor="let step of aStarPathDetails; let i = index"
             [ngClass]="step.type"
           >
             <div class="step-index">{{ i + 1 }}</div>

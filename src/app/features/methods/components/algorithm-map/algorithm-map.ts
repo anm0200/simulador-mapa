@@ -218,7 +218,26 @@ export class AlgorithmMap implements AfterViewInit, OnDestroy {
       return;
     }
 
-    this.animateExploration(result);
+    this.animateExploration(result, '#f59e0b', '#fcd34d'); // Colores de Dijkstra (Naranja/Amarillo)
+  }
+
+  public runAStar(): void {
+    if (!this.selectedStartNode || !this.selectedEndNode) {
+      console.warn('Selecciona origen y destino primero');
+      return;
+    }
+
+    this.clearAnimation();
+    this.clearAlgorithmResults();
+
+    const result = this.graphService.runAStar(this.selectedStartNode, this.selectedEndNode);
+
+    if (result.distance === Infinity) {
+      alert('No hay ruta posible entre estos puntos en los datos actuales.');
+      return;
+    }
+
+    this.animateExploration(result, '#06b6d4', '#67e8f9'); // Colores de A* (Cian)
   }
 
   public runKruskal(): void {
@@ -294,7 +313,7 @@ export class AlgorithmMap implements AfterViewInit, OnDestroy {
     this.animationTimeouts.push(finalTimeout);
   }
 
-  private animateExploration(result: any): void {
+  private animateExploration(result: any, nodeColor: string, edgeColor: string): void {
     const { visitedOrder, shortestPath, pathMap, distance } = result;
     const ANIMATION_SPEED_MS = 50; // milisegundos por paso
 
@@ -307,7 +326,7 @@ export class AlgorithmMap implements AfterViewInit, OnDestroy {
       const timeout = setTimeout(() => {
         const marker = this.nodeMarkers.get(nodeId);
         if (marker) {
-          marker.setStyle({ fillColor: '#f59e0b' }); // Naranja para explorado
+          marker.setStyle({ fillColor: nodeColor });
         }
 
         // Dibujamos la arista por la que llegamos a este nodo en la exploración
@@ -315,7 +334,7 @@ export class AlgorithmMap implements AfterViewInit, OnDestroy {
         if (edgeToReach && edgeToReach.path) {
           const latlngs = edgeToReach.path.map((p: any) => [p.lat, p.lng]);
           const expLayer = this.L.polyline(latlngs, {
-            color: '#fcd34d', // amarillo claro
+            color: edgeColor,
             weight: 3,
             opacity: 0.6,
             dashArray: '5, 5',

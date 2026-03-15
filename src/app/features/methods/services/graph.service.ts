@@ -47,7 +47,7 @@ export class GraphService {
       this.graph = { nodes: [], edges: [] };
       this.adjacencyList.clear();
 
-      const features = geojson?.features ?? [];
+      const features = geojson.features || [];
 
       // Para clustering: Guardamos los clústeres creados
       const clusters: { id: string; lat: number; lng: number }[] = [];
@@ -82,8 +82,8 @@ export class GraphService {
         const feature = features[i];
 
         if (
-          feature?.geometry?.type !== 'LineString' ||
-          !Array.isArray(feature?.geometry?.coordinates) ||
+          feature.geometry.type !== 'LineString' ||
+          !Array.isArray(feature.geometry.coordinates) ||
           feature.geometry.coordinates.length < 2
         ) {
           continue;
@@ -261,6 +261,100 @@ export class GraphService {
       shortestPath,
       visitedOrder,
       distance: distances.get(endId) || 0,
+    };
+  }
+
+  /**
+   * Algoritmo A*
+   * Utiliza la distancia Haversine como heurística.
+   */
+  runAStar(
+    startId: string,
+    endId: string,
+  ): {
+    pathMap: Map<string, Edge | null>;
+    shortestPath: Edge[];
+    visitedOrder: string[];
+    distance: number;
+  } {
+    const endNode = this.graph.nodes.find((n) => n.id === endId);
+    if (!endNode) return { pathMap: new Map(), shortestPath: [], visitedOrder: [], distance: Infinity };
+
+    const gScore = new Map<string, number>(); // Coste real desde el inicio
+    const fScore = new Map<string, number>(); // Coste estimado total (g + h)
+    const previous = new Map<string, Edge | null>();
+    const visited = new Set<string>();
+    const visitedOrder: string[] = [];
+    const openSet: { id: string; f: number }[] = [];
+
+    for (const node of this.graph.nodes) {
+      gScore.set(node.id, Infinity);
+      fScore.set(node.id, Infinity);
+      previous.set(node.id, null);
+    }
+
+    gScore.set(startId, 0);
+    const hStart = this.calculateDistance(
+      this.graph.nodes.find((n) => n.id === startId)!.lat,
+      this.graph.nodes.find((n) => n.id === startId)!.lng,
+      endNode.lat,
+      endNode.lng,
+    );
+    fScore.set(startId, hStart);
+    openSet.push({ id: startId, f: hStart });
+
+    while (openSet.length > 0) {
+      openSet.sort((a, b) => a.f - b.f);
+      const current = openSet.shift()!;
+      const currentId = current.id;
+
+      if (visited.has(currentId)) continue;
+      visited.add(currentId);
+      visitedOrder.push(currentId);
+
+      if (currentId === endId) break;
+
+      const neighbors = this.adjacencyList.get(currentId) || [];
+      for (const edge of neighbors) {
+        if (visited.has(edge.targetId)) continue;
+
+        const tentativeGScore = gScore.get(currentId)! + edge.weight;
+
+        if (tentativeGScore < gScore.get(edge.targetId)!) {
+          previous.set(edge.targetId, edge);
+          gScore.set(edge.targetId, tentativeGScore);
+
+          const targetNode = this.graph.nodes.find((n) => n.id === edge.targetId)!;
+          const h = this.calculateDistance(targetNode.lat, targetNode.lng, endNode.lat, endNode.lng);
+          const f = tentativeGScore + h;
+          fScore.set(edge.targetId, f);
+
+          if (!openSet.some((item) => item.id === edge.targetId)) {
+            openSet.push({ id: edge.targetId, f });
+          }
+        }
+      }
+    }
+
+    const shortestPath: Edge[] = [];
+    let curr = endId;
+    if (gScore.get(endId) === Infinity) {
+      return { pathMap: previous, shortestPath: [], visitedOrder, distance: Infinity };
+    }
+
+    while (curr !== startId) {
+      const edge = previous.get(curr);
+      if (edge) {
+        shortestPath.unshift(edge);
+        curr = edge.sourceId;
+      } else break;
+    }
+
+    return {
+      pathMap: previous,
+      shortestPath,
+      visitedOrder,
+      distance: gScore.get(endId) || 0,
     };
   }
 

@@ -106,6 +106,26 @@ El pipeline final se estructuró para garantizar un flujo de trabajo profesional
 
 ---
 
-## 4. Conclusión Técnica
+### Incidencia VI: Optimizaciones Angular 21 (NG8107)
+- **Error Detectado**: Advertencias de compilación sobre encadenamiento opcional (`?.`) redundante.
+- **Resolución**: Refactorización de `GraphService` y `AlgorithmMap` para seguir los estándares de tipos más estrictos de la versión 21.
 
-La transición de una arquitectura de pruebas tradicional a este ecosistema avanzado (**Angular 21 + Vitest + AnalogJS + GitHub Actions**) constituye una pieza de ingeniería de software robusta. Se han superado los desafíos de integración de herramientas de vanguardia, resultando en un entorno de desarrollo profesional, documentado y académicamente riguroso para la defensa del TFG.
+---
+
+## 5. Implementación del Algoritmo A* y Componentes Didácticos
+
+Para elevar el nivel académico del proyecto, se ha integrado el algoritmo **A*** junto con una capa de **Explicaciones Didácticas**:
+
+### 5.1. Lógica del Algoritmo A*
+- **Heurística**: Se emplea la distancia *Haversine* desde el nodo actual al destino como guía.
+- **Ventaja Técnica**: Reduce drásticamente el espacio de búsqueda comparado con Dijkstra, optimizando recursos en el runner de CI y mejorando la experiencia de usuario.
+
+### 5.2. Interfaz Didáctica
+- Se ha diseñado una sección de **"Explicación del Método"** que se adapta dinámicamente al algoritmo seleccionado.
+- **Objetivo**: Proporcionar una base teórica inmediata durante la defensa del TFG, explicando la lógica ("Cómo funciona") y el uso práctico ("Para qué sirve").
+
+---
+
+## 6. Conclusión Técnica (Actualizada)
+
+La inclusión de **A*** y la **capa didáctica** transforma el simulador de una herramienta puramente técnica a un recurso educativo e ingenieril completo. La robustez del sistema se mantiene bajo el control del pipeline de CI/CD, garantizando que cada mejora algorítmica sea verificada automáticamente.

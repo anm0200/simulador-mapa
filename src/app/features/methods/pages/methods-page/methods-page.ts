@@ -28,6 +28,30 @@ export class MethodsPage {
   public kruskalPathDetails: any[] = [];
   public kruskalEdgesDetails: any[] = [];
 
+  // Pruebas para A* (similares a Dijkstra)
+  public aStarDistance: number | null = null;
+  public aStarVisitedCount: number | null = null;
+  public aStarPathDetails: any[] = [];
+  public aStarEstimatedTime: number | null = null;
+
+  public methodExplanations: Record<string, { title: string; logic: string; usage: string }> = {
+    dijkstra: {
+      title: 'Algoritmo de Dijkstra',
+      logic: 'Explora todos los caminos posibles desde el origen, expandiéndose en círculos concéntricos hasta encontrar el destino. Garantiza siempre el camino más corto.',
+      usage: 'Ideal cuando necesitas precisión matemática absoluta y no tienes una pista de hacia dónde está el objetivo.',
+    },
+    aStar: {
+      title: 'Algoritmo A* (A-Estrella)',
+      logic: 'Es un "Dijkstra con brújula". Además de la distancia recorrida, usa una función heurística (distancia en línea recta al destino) para priorizar por dónde seguir buscando.',
+      usage: 'Mucho más rápido que Dijkstra en mapas reales. Es el estándar en navegación GPS y videojuegos.',
+    },
+    kruskal: {
+      title: 'Algoritmo de Kruskal',
+      logic: 'No busca un camino entre dos puntos, sino que conecta TODOS los puntos del mapa con el mínimo coste total de infraestructura, evitando ciclos.',
+      usage: 'Perfecto para diseñar redes eléctricas, de fibra óptica o tuberías de suministro con el mínimo material.',
+    },
+  };
+
   public totalNodes: number = 0;
   public totalEdges: number = 0;
   public currentRadius: number = 50;
@@ -42,6 +66,9 @@ export class MethodsPage {
     this.activeMethod = methodKey;
     if (methodKey !== 'dijkstra') {
       this.resetDijkstra();
+    }
+    if (methodKey !== 'aStar') {
+      this.resetAStar();
     }
     if (methodKey !== 'kruskal') {
       this.resetKruskal();
@@ -78,6 +105,22 @@ export class MethodsPage {
     this.kruskalPathDetails = [];
     this.kruskalEdgesDetails = [];
     this.algorithmMap?.runKruskal();
+  }
+
+  runAStar() {
+    this.aStarDistance = null;
+    this.aStarVisitedCount = null;
+    this.aStarPathDetails = [];
+    this.aStarEstimatedTime = null;
+    this.algorithmMap?.runAStar();
+  }
+
+  resetAStar() {
+    this.aStarDistance = null;
+    this.aStarVisitedCount = null;
+    this.aStarPathDetails = [];
+    this.aStarEstimatedTime = null;
+    this.algorithmMap?.resetSelection();
   }
 
   resetKruskal() {
@@ -120,6 +163,26 @@ export class MethodsPage {
     }
 
     this.estimatedTimeHours = totalTime;
+  }
+
+  onAStarFinished(result: { distance: number; visitedCount: number; path: any[] }) {
+    this.aStarDistance = result.distance;
+    this.aStarVisitedCount = result.visitedCount;
+    this.aStarPathDetails = [];
+    let totalTime = 0;
+
+    for (const edge of result.path) {
+      const isFlight = edge.type === 'flight';
+      const timeH = edge.weight / (isFlight ? 800 : 100);
+      totalTime += timeH;
+      this.aStarPathDetails.push({
+        type: edge.type,
+        label: isFlight ? `Vuelo (${edge.flightId})` : 'Transbordo',
+        distance: edge.weight,
+        time: timeH,
+      });
+    }
+    this.aStarEstimatedTime = totalTime;
   }
 
   onKruskalFinished(result: {
