@@ -482,6 +482,31 @@ private updateMapCursor() {
 
     // Al finalizar la exploración, dibujamos la ruta final
     const finalTimeout = setTimeout(() => {
+      // --- NUEVO: Limpiar rastro de exploración (línea punteada) ---
+      for (const layer of this.explorationLayers) {
+        this.map.removeLayer(layer);
+      }
+      this.explorationLayers = [];
+
+      // --- NUEVO: Resetear colores de nodos explorados a su estado original ---
+      visitedOrder.forEach((id: string) => {
+        // No resetear si es origen, destino o uno de los puntos principales del rally
+        if (
+          id !== this.selectedStartNode && 
+          id !== this.selectedEndNode && 
+          !this.rallyPoints.includes(id)
+        ) {
+          const marker = this.nodeMarkers.get(id);
+          if (marker) {
+            marker.setStyle({
+              fillColor: '#3b82f6',
+              radius: 5,
+              color: '#1e3a8a',
+            });
+          }
+        }
+      });
+
       this.drawShortestPath(shortestPath, additive); 
       this.simulationFinished.emit({
         distance,
