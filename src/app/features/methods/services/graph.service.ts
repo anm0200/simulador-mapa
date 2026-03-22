@@ -26,12 +26,20 @@ export interface GraphData {
   edges: Edge[];
 }
 
+export interface RestrictedZone {
+  id: string;
+  center: Point;
+  radius: number; // km
+}
+
 @Injectable({
   providedIn: 'root',
 })
 export class GraphService {
   private graph: GraphData = { nodes: [], edges: [] };
+  private originalEdges: Edge[] = []; // Para restaurar si se quitan restricciones
   private adjacencyList: Map<string, Edge[]> = new Map();
+  private restrictedZones: RestrictedZone[] = [];
 
   constructor() {}
 
@@ -45,6 +53,7 @@ export class GraphService {
       const geojson = await response.json();
 
       this.graph = { nodes: [], edges: [] };
+      this.originalEdges = [];
       this.adjacencyList.clear();
 
       const features = geojson.features || [];
@@ -179,7 +188,151 @@ export class GraphService {
   ) {
     const edge: Edge = { sourceId, targetId, weight, type, flightId, path };
     this.graph.edges.push(edge);
+    this.originalEdges.push({ ...edge, path: [...path] });
     this.adjacencyList.get(sourceId)?.push(edge);
+  }
+
+  // --- NUEVA LÓGICA: RALLYS AÉREOS (ZONAS RESTRINGIDAS) ---
+
+  setRestrictedZones(zones: RestrictedZone[]) {
+    this.restrictedZones = zones;
+    this.applyRestrictions();
+  }
+
+  clearRestrictedZones() {
+    this.restrictedZones = [];
+    this.applyRestrictions();
+  }
+
+  /**
+   * Re-calcula la geometría y pesos de todas las aristas
+   * basándose en las zonas restringidas actuales.
+   */
+  private applyRestrictions() {
+    // 1. Restaurar aristas originales
+    this.graph.edges = this.originalEdges.map((e) => ({ ...e, path: [...(e.path || [])] }));
+
+    // 2. Si no hay zonas, terminar
+    if (this.restrictedZones.length === 0) {
+      this.rebuildAdjacencyList();
+      return;
+    }
+
+    // 3. Para cada arista, verificar y corregir contra cada zona
+    for (const edge of this.graph.edges) {
+      if (edge.type !== 'flight' || !edge.path) continue;
+
+      let edgeAffected = false;
+      for (const zone of this.restrictedZones) {
+        const corrected = this.correctPathForZone(edge.path, zone);
+        if (corrected) {
+          edge.path = corrected;
+          edgeAffected = true;
+        }
+      }
+
+      if (edgeAffected) {
+        // ACTUALIZAR PESO con una penalización masiva (x100)
+        // Esto asegura que Dijkstra lo evite si hay CUALQUIER otra alternativa
+        edge.weight = this.calculatePathDistance(edge.path) * 100;
+      }
+    }
+
+    this.rebuildAdjacencyList();
+  }
+
+  private rebuildAdjacencyList() {
+    this.adjacencyList.clear();
+    for (const node of this.graph.nodes) {
+      this.adjacencyList.set(node.id, []);
+    }
+    for (const edge of this.graph.edges) {
+      this.adjacencyList.get(edge.sourceId)?.push(edge);
+    }
+  }
+
+  private calculatePathDistance(path: Point[]): number {
+    let dist = 0;
+    for (let i = 0; i < path.length - 1; i++) {
+      dist += this.calculateDistance(path[i].lat, path[i].lng, path[i + 1].lat, path[i + 1].lng);
+    }
+    return dist;
+  }
+
+  /**
+   * Toma una trayectoria y la "dobla" para que bordee la zona si la atraviesa.
+   */
+  private correctPathForZone(path: Point[], zone: RestrictedZone): Point[] | null {
+    let intersects = false;
+    const newPath: Point[] = [];
+
+    for (let i = 0; i < path.length - 1; i++) {
+      const p1 = path[i];
+      const p2 = path[i + 1];
+
+      const dist1 = this.calculateDistance(p1.lat, p1.lng, zone.center.lat, zone.center.lng);
+      const dist2 = this.calculateDistance(p2.lat, p2.lng, zone.center.lat, zone.center.lng);
+
+      // Si el segmento entra en la zona (o alguno de sus puntos extremos)
+      if (dist1 < zone.radius || dist2 < zone.radius) {
+        intersects = true;
+        const midPoint = this.getArcMidpoint(p1, p2, zone);
+        newPath.push(p1);
+        newPath.push(midPoint);
+      } else {
+        // Verificar punto medio del segmento
+        const latMid = (p1.lat + p2.lat) / 2;
+        const lngMid = (p1.lng + p2.lng) / 2;
+        const distMid = this.calculateDistance(latMid, lngMid, zone.center.lat, zone.center.lng);
+
+        if (distMid < zone.radius) {
+          intersects = true;
+          const midPoint = this.getArcMidpoint(p1, p2, zone);
+          newPath.push(p1);
+          newPath.push(midPoint);
+        } else {
+          newPath.push(p1);
+        }
+      }
+    }
+    
+    // Evitar duplicados consecutivos
+    newPath.push(path[path.length - 1]);
+    const cleanPath: Point[] = [];
+    for (let i = 0; i < newPath.length; i++) {
+      if (i === 0 || newPath[i].lat !== newPath[i-1].lat || newPath[i].lng !== newPath[i-1].lng) {
+        cleanPath.push(newPath[i]);
+      }
+    }
+
+    return intersects ? cleanPath : null;
+  }
+
+  /**
+   * Encuentra un punto en el borde del círculo para desviar la ruta.
+   */
+  private getArcMidpoint(p1: Point, p2: Point, zone: RestrictedZone): Point {
+    // Vector desde el centro del círculo hacia el punto medio de p1 y p2
+    const latMid = (p1.lat + p2.lat) / 2;
+    const lngMid = (p1.lng + p2.lng) / 2;
+
+    const dLat = latMid - zone.center.lat;
+    const dLng = lngMid - zone.center.lng;
+    const distanceInDegrees = Math.sqrt(dLat * dLat + dLng * dLng);
+
+    // Si el punto medio está justo en el centro (raro), desplazamos ligeramente
+    if (distanceInDegrees === 0) {
+      return { lat: p1.lat + 0.01, lng: p1.lng + 0.01 };
+    }
+
+    // Convertimos el radio de KM a grados aproximados (1 grado ~ 111.32 km)
+    const targetDistanceDegrees = (zone.radius + 1) / 111.32;
+    const ratio = targetDistanceDegrees / distanceInDegrees;
+
+    return {
+      lat: zone.center.lat + dLat * ratio,
+      lng: zone.center.lng + dLng * ratio
+    };
   }
 
   /**
@@ -526,5 +679,63 @@ export class GraphService {
 
   private deg2rad(deg: number): number {
     return deg * (Math.PI / 180);
+  }
+
+  /**
+   * Ejecuta un algoritmo a través de múltiples puntos (waypoints) en secuencia.
+   */
+  runMultiPointAlgorithm(
+    nodeIds: string[],
+    algorithm: 'dijkstra' | 'astar' | 'kruskal'
+  ): {
+    path: Edge[];
+    distance: number;
+    visitedCount: number;
+    segments: { from: string; to: string; distance: number; path: Edge[]; fullResult?: any }[];
+  } {
+    let totalPath: Edge[] = [];
+    let totalDistance = 0;
+    let totalVisited = 0;
+    const segments: { from: string; to: string; distance: number; path: Edge[]; fullResult?: any }[] = [];
+
+    // Para Kruskal, pre-calculamos el MST global una vez
+    let mstEdges: Edge[] = [];
+    if (algorithm === 'kruskal') {
+      mstEdges = this.runKruskal().mstEdges;
+    }
+
+    for (let i = 0; i < nodeIds.length - 1; i++) {
+      const start = nodeIds[i];
+      const end = nodeIds[i + 1];
+      let result: any;
+
+      if (algorithm === 'dijkstra') {
+        result = this.runDijkstra(start, end);
+        segments.push({ from: start, to: end, distance: result.distance, path: result.shortestPath, fullResult: result });
+        totalPath = [...totalPath, ...result.shortestPath];
+        totalDistance += result.distance;
+        totalVisited += result.visitedOrder.length;
+      } else if (algorithm === 'astar') {
+        result = this.runAStar(start, end);
+        segments.push({ from: start, to: end, distance: result.distance, path: result.shortestPath, fullResult: result });
+        totalPath = [...totalPath, ...result.shortestPath];
+        totalDistance += result.distance;
+        totalVisited += result.visitedOrder.length;
+      } else if (algorithm === 'kruskal') {
+        const path = this.findPathInMST(start, end, mstEdges);
+        const distance = path.reduce((acc, e) => acc + e.weight, 0);
+        segments.push({ from: start, to: end, distance, path, fullResult: { shortestPath: path, visitedOrder: [] } });
+        totalPath = [...totalPath, ...path];
+        totalDistance += distance;
+        totalVisited += this.graph.nodes.length;
+      }
+    }
+
+    return {
+      path: totalPath,
+      distance: totalDistance,
+      visitedCount: totalVisited,
+      segments
+    };
   }
 }

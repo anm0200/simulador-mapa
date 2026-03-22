@@ -13,6 +13,10 @@ import { FormsModule } from '@angular/forms';
 })
 export class MethodsPage {
   @ViewChild(AlgorithmMap) algorithmMap!: AlgorithmMap;
+  public restrictionsModeActive = false;
+  public restrictionRadius = 100;
+
+  public rallySelectionActive = false;
 
   public activeMethod = 'none';
   public isGraphLoaded = false;
@@ -130,6 +134,49 @@ export class MethodsPage {
     this.kruskalPathDetails = [];
     this.kruskalEdgesDetails = [];
     this.algorithmMap?.resetSelection(); // Limpia también las aristas moradas
+  }
+
+  toggleRestrictionsMode() {
+    this.restrictionsModeActive = !this.restrictionsModeActive;
+    if (this.algorithmMap) {
+      this.algorithmMap.restrictionsMode = this.restrictionsModeActive;
+    }
+  }
+
+  clearRestrictionZones() {
+    this.algorithmMap?.clearRestrictedZones();
+  }
+
+  syncRestrictionRadius() {
+    if (this.algorithmMap) {
+      this.algorithmMap.restrictionRadius = this.restrictionRadius;
+    }
+  }
+
+  toggleRallySelection() {
+    this.rallySelectionActive = !this.rallySelectionActive;
+    if (this.algorithmMap) {
+      this.algorithmMap.isRallyMode = this.rallySelectionActive;
+      // Si activamos rally, deseleccionamos origen/destino normal para no confundir
+      if (this.rallySelectionActive) {
+        this.algorithmMap.resetSelection();
+      }
+    }
+  }
+
+  runRally() {
+    let algo: 'dijkstra' | 'astar' | 'kruskal' = 'dijkstra';
+    if (this.activeMethod === 'astar') algo = 'astar';
+    if (this.activeMethod === 'kruskal') algo = 'kruskal';
+
+    this.algorithmMap?.runRallyAlgorithm(algo);
+  }
+
+  clearRally() {
+    this.resetDijkstra();
+    this.resetAStar();
+    this.resetKruskal();
+    this.algorithmMap?.clearRallySelection();
   }
 
   onSimulationFinished(result: { distance: number; visitedCount: number; path: any[] }) {

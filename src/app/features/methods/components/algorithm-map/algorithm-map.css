@@ -24,3 +24,8 @@
 ::ng-deep .leaflet-container {
   font-family: inherit;
 }
+
+::ng-deep .rally-cursor,
+::ng-deep .rally-cursor .leaflet-interactive {
+  cursor: crosshair !important;
+}

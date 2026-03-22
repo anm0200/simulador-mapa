@@ -391,3 +391,207 @@
 .mst-edges-details .path-breakdown::-webkit-scrollbar-thumb:hover {
   background: #94a3b8;
 }
+
+/* --- Estilos para Zonas Restringidas --- */
+.restrictions-panel {
+  background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+  border: 1px solid #fde68a;
+  padding: 16px;
+  border-radius: 16px;
+  margin-bottom: 24px;
+  box-shadow: 0 4px 12px rgba(251, 191, 36, 0.1);
+}
+
+.restrictions-panel h3 {
+  margin-top: 0;
+  margin-bottom: 8px;
+  color: #92400e;
+  font-size: 1.1rem;
+}
+
+.restrictions-desc {
+  font-size: 0.85rem;
+  color: #b45309 !important;
+  margin-bottom: 12px;
+}
+
+.restrictions-inputs {
+  margin-bottom: 15px;
+}
+
+.restrictions-inputs label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #92400e;
+}
+
+.restrictions-inputs input {
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1px solid #fde68a;
+  background: white;
+  width: 100%;
+  font-weight: 600;
+  color: #b45309;
+}
+
+.restrictions-controls {
+  display: flex;
+  gap: 12px;
+}
+
+.restrictions-btn {
+  background: #f59e0b;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex: 1;
+}
+
+.restrictions-btn:hover {
+  background: #d97706;
+  transform: translateY(-1px);
+}
+
+.restrictions-btn.active {
+  background: #ef4444;
+  box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.2);
+  animation: pulse-red-restriction 2s infinite;
+}
+
+.clear-restrictions-btn {
+  background: white;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.clear-restrictions-btn:hover {
+  background: #fef2f2;
+}
+
+@keyframes pulse-red-restriction {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.02); }
+  100% { transform: scale(1); }
+}
+
+/* --- Estilos para Rally de Waypoints --- */
+.rally-panel {
+  background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+  border: 1px solid #6ee7b7;
+  padding: 16px;
+  border-radius: 16px;
+  margin-bottom: 24px;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.1);
+}
+
+.rally-panel h3 {
+  margin-top: 0;
+  margin-bottom: 8px;
+  color: #065f46;
+  font-size: 1.1rem;
+}
+
+.rally-panel .rally-desc {
+  font-size: 0.85rem;
+  color: #047857 !important;
+  margin-bottom: 12px;
+}
+
+.rally-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.rally-btn {
+  background: #10b981;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.rally-btn:hover {
+  background: #059669;
+}
+
+.rally-btn.active {
+  background: #ef4444;
+  animation: pulse-red-rally 2s infinite;
+}
+
+.run-rally-btn {
+  background: #3b82f6;
+  color: white;
+  border: none;
+  padding: 8px 18px;
+  border-radius: 8px;
+  font-weight: 700;
+  cursor: pointer;
+  flex: 1;
+  transition: all 0.2s;
+}
+
+.run-rally-btn:hover:not(:disabled) {
+  background: #2563eb;
+  transform: translateY(-1px);
+}
+
+.run-rally-btn:disabled {
+  background: #94a3b8;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.clear-rally-btn {
+  background: white;
+  color: #64748b;
+  border: 1px solid #e2e8f0;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.clear-rally-btn:hover {
+  background: #f8fafc;
+}
+
+/* Estilo para los marcadores numerados de Rally */
+::ng-deep .rally-point-marker {
+  background: #10b981;
+  color: white;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 900;
+  font-size: 12px;
+  border: 2px solid white;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+}
+
+@keyframes pulse-red-rally {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}

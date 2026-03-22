@@ -10,7 +10,7 @@ import {
   EventEmitter,
 } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
-import { GraphService, GraphData, Node, Edge } from '../../services/graph.service';
+import { GraphService, GraphData, Node, Edge, RestrictedZone } from '../../services/graph.service';
 
 @Component({
   selector: 'app-algorithm-map',
@@ -51,6 +51,22 @@ export class AlgorithmMap implements AfterViewInit, OnDestroy {
   private animationTimeouts: any[] = [];
   private explorationLayers: any[] = [];
   private pathLayer: any = null;
+  private restrictedZoneLayers: Map<string, any> = new Map();
+
+  private _restrictionsMode = false;
+  public get restrictionsMode() {
+    return this._restrictionsMode;
+  }
+  public set restrictionsMode(val: boolean) {
+    this._restrictionsMode = val;
+    this.updateMapCursor();
+  }
+  public restrictionRadius = 100; // km
+  private zones: RestrictedZone[] = [];
+
+  public isRallyMode = false;
+  private rallyPoints: string[] = [];
+  private rallyMarkerLayers: any[] = [];
 
   constructor(
     @Inject(PLATFORM_ID) platformId: object,
@@ -83,6 +99,8 @@ export class AlgorithmMap implements AfterViewInit, OnDestroy {
     this.L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 18,
     }).addTo(this.map);
+
+    this.map.on('click', (e: any) => this.onMapClick(e));
   }
 
   public async loadGraph(radiusKm: number = 50): Promise<void> {
@@ -103,6 +121,12 @@ export class AlgorithmMap implements AfterViewInit, OnDestroy {
     if (!this.graphData || !this.map || !this.L) return;
 
     const bounds = this.L.latLngBounds([]);
+
+    // --- FIJO: Limpiar capas de aristas anteriores antes de re-renderizar ---
+    for (const line of this.edgeLines) {
+      if (this.map.hasLayer(line)) this.map.removeLayer(line);
+    }
+    this.edgeLines = [];
 
     // Dibujar aristas (Rutas de Vuelo Base)
     // Para no saturar el mapa, podemos dibujar solo en un tono muy sutil
@@ -162,23 +186,121 @@ export class AlgorithmMap implements AfterViewInit, OnDestroy {
     if (bounds.isValid()) {
       this.map.fitBounds(bounds, { padding: [50, 50] });
     }
+
+    this.renderRestrictedZones();
   }
+
+  private onMapClick(e: any): void {
+    if (this._restrictionsMode) {
+      const zoneId = `zone_${Date.now()}`;
+      const newZone: RestrictedZone = {
+        id: zoneId,
+        center: { lat: e.latlng.lat, lng: e.latlng.lng },
+        radius: this.restrictionRadius, 
+      };
+      this.addRestrictedZone(newZone);
+    }
+  }
+
+  public addRestrictedZone(zone: RestrictedZone): void {
+    this.zones.push(zone);
+    this.graphService.setRestrictedZones(this.zones);
+    this.renderRestrictedZones();
+    // Forzamos un re-render suave del grafo para mostrar rutas corregidas
+    this.renderGraph();
+  }
+
+  public clearRestrictedZones(): void {
+    this.zones = [];
+    this.graphService.clearRestrictedZones();
+    this.clearAlgorithmResults(); // Limpiar también posibles rutas previas de Dijkstra
+    this.renderRestrictedZones();
+    this.renderGraph();
+  }
+
+  private renderRestrictedZones(): void {
+    if (!this.map || !this.L) return;
+
+    // Limpiar capas anteriores
+    this.restrictedZoneLayers.forEach((layer) => this.map.removeLayer(layer));
+    this.restrictedZoneLayers.clear();
+
+    for (const zone of this.zones) {
+      const circle = this.L.circle([zone.center.lat, zone.center.lng], {
+        radius: zone.radius * 1000, // Leaflet usa metros
+        color: '#ef4444',
+        fillColor: '#f87171',
+        fillOpacity: 0.3,
+        weight: 2,
+      }).addTo(this.map);
+
+    circle.bindTooltip('Zona de Rally Aéreo (Restringida)');
+    this.restrictedZoneLayers.set(zone.id, circle);
+  }
+}
+
+private updateMapCursor() {
+  if (!this.mapContainerRef || !this.isBrowser) return;
+  const el = this.mapContainerRef.nativeElement;
+  if (this._restrictionsMode) {
+    el.classList.add('restrictions-cursor');
+  } else {
+    el.classList.remove('restrictions-cursor');
+  }
+}
 
   private onNodeClick(nodeId: string): void {
     if (this.animationTimeouts.length > 0) return; // Si está animando, bloquear
+
+    // --- NUEVO: SI ESTAMOS EN MODO RESTRICCIONES, CREAR ZONA EN EL NODO ---
+    if (this._restrictionsMode) {
+      const node = this.graphData?.nodes.find((n) => n.id === nodeId);
+      if (node) {
+        const zoneId = `zone_node_${Date.now()}`;
+        this.addRestrictedZone({
+          id: zoneId,
+          center: { lat: node.lat, lng: node.lng },
+          radius: this.restrictionRadius,
+        });
+        return; 
+      }
+    }
+
+    // --- NUEVO: SI ESTAMOS EN MODO RALLY (WAYPOINTS), AÑADIR PUNTO ---
+    if (this.isRallyMode) {
+      if (!this.rallyPoints.includes(nodeId)) {
+        this.rallyPoints.push(nodeId);
+        this.renderRallyPoints();
+      } else {
+        // Si ya está, lo quitamos
+        this.rallyPoints = this.rallyPoints.filter(id => id !== nodeId);
+        this.renderRallyPoints();
+      }
+      return;
+    }
 
     const marker = this.nodeMarkers.get(nodeId);
 
     // Si ya está seleccionado, lo desseleccionamos
     if (this.selectedStartNode === nodeId) {
       this.selectedStartNode = null;
-      marker.setStyle({ fillColor: '#3b82f6', radius: 5 }); // Reset a azul
+      marker.setStyle({
+        fillColor: '#3b82f6',
+        radius: 5,
+        color: '#1e3a8a',
+        weight: 1,
+      }); // Reset completo
       return;
     }
 
     if (this.selectedEndNode === nodeId) {
       this.selectedEndNode = null;
-      marker.setStyle({ fillColor: '#3b82f6', radius: 5 }); // Reset a azul
+      marker.setStyle({
+        fillColor: '#3b82f6',
+        radius: 5,
+        color: '#1e3a8a',
+        weight: 1,
+      }); // Reset completo
       return;
     }
 
@@ -192,7 +314,14 @@ export class AlgorithmMap implements AfterViewInit, OnDestroy {
     } else {
       // Si ya hay 2, reseteamos el origen y ponemos el nuevo como origen
       const oldStartMarker = this.nodeMarkers.get(this.selectedStartNode);
-      if (oldStartMarker) oldStartMarker.setStyle({ fillColor: '#3b82f6', radius: 5 });
+      if (oldStartMarker) {
+        oldStartMarker.setStyle({
+          fillColor: '#3b82f6',
+          radius: 5,
+          color: '#1e3a8a',
+          weight: 1,
+        });
+      }
 
       this.selectedStartNode = nodeId;
       marker.setStyle({ fillColor: '#22c55e', radius: 8 });
@@ -313,9 +442,15 @@ export class AlgorithmMap implements AfterViewInit, OnDestroy {
     this.animationTimeouts.push(finalTimeout);
   }
 
-  private animateExploration(result: any, nodeColor: string, edgeColor: string): void {
+  private animateExploration(
+    result: any, 
+    nodeColor: string, 
+    edgeColor: string, 
+    onComplete?: () => void,
+    additive = false
+  ): void {
     const { visitedOrder, shortestPath, pathMap, distance } = result;
-    const ANIMATION_SPEED_MS = 50; // milisegundos por paso
+    const ANIMATION_SPEED_MS = 20; // Un poco más rápido para rallys
 
     // Animamos los nodos visitados
     for (let i = 0; i < visitedOrder.length; i++) {
@@ -347,18 +482,23 @@ export class AlgorithmMap implements AfterViewInit, OnDestroy {
 
     // Al finalizar la exploración, dibujamos la ruta final
     const finalTimeout = setTimeout(() => {
-      this.drawShortestPath(shortestPath);
+      this.drawShortestPath(shortestPath, additive); 
       this.simulationFinished.emit({
         distance,
         visitedCount: visitedOrder.length,
         path: shortestPath,
       });
+      if (onComplete) onComplete();
     }, visitedOrder.length * ANIMATION_SPEED_MS);
 
     this.animationTimeouts.push(finalTimeout);
   }
 
-  private drawShortestPath(shortestPath: Edge[]): void {
+  private drawShortestPath(shortestPath: Edge[], additive = false): void {
+    if (!additive && this.pathLayer) {
+      this.map.removeLayer(this.pathLayer);
+      this.pathLayer = null;
+    }
     const layers: any[] = [];
 
     // Iterar sobre cada arista del camino mínimo para aplicarle su estilo
@@ -388,11 +528,110 @@ export class AlgorithmMap implements AfterViewInit, OnDestroy {
     }
 
     if (layers.length > 0) {
-      // Agrupamos las líneas en un FeatureGroup para mandarlas al mapa de golpe
-      this.pathLayer = this.L.featureGroup(layers).addTo(this.map);
+      // Si es aditivo, añadimos al FeatureGroup existente si existe
+      if (additive && this.pathLayer) {
+        layers.forEach(l => this.pathLayer.addLayer(l));
+      } else {
+        // Si no es aditivo o no existe, creamos uno nuevo
+        this.pathLayer = this.L.featureGroup(layers).addTo(this.map);
+      }
 
-      // Animamos el zoom hacia toda la ruta completa
+      // Animamos el zoom hacia el segmento actual (o toda la ruta si no es aditivo)
       this.map.fitBounds(this.pathLayer.getBounds(), { padding: [50, 50], animate: true });
+    }
+  }
+
+  public clearRallySelection(): void {
+    this.rallyPoints = [];
+    this.renderRallyPoints();
+  }
+
+  private renderRallyPoints(): void {
+    if (!this.map || !this.L) return;
+
+    // Limpiar capas anteriores
+    for (const layer of this.rallyMarkerLayers) {
+      this.map.removeLayer(layer);
+    }
+    this.rallyMarkerLayers = [];
+
+    // Dibujar cada punto con su índice
+    this.rallyPoints.forEach((nodeId, index) => {
+      const node = this.graphData?.nodes.find(n => n.id === nodeId);
+      if (node) {
+        const icon = this.L.divIcon({
+          html: `<div class="rally-point-marker">${index + 1}</div>`,
+          className: 'custom-div-icon',
+          iconSize: [24, 24],
+          iconAnchor: [12, 12]
+        });
+
+        const marker = this.L.marker([node.lat, node.lng], { icon }).addTo(this.map);
+        this.rallyMarkerLayers.push(marker);
+      }
+    });
+  }
+
+  public async runRallyAlgorithm(algorithm: 'dijkstra' | 'astar' | 'kruskal'): Promise<void> {
+    if (this.rallyPoints.length < 2) {
+      alert('Selecciona al menos 2 puntos para el rally');
+      return;
+    }
+
+    this.clearAnimation();
+    this.clearAlgorithmResults();
+
+    const result = this.graphService.runMultiPointAlgorithm(this.rallyPoints, algorithm);
+    
+    // Al empezar un rally, limpiamos todo (incluyendo el pathLayer previo si existe)
+    if (this.pathLayer) {
+        this.map.removeLayer(this.pathLayer);
+        this.pathLayer = null;
+    }
+
+    // Animar secuencialmente cada segmento
+    await this.animateRallySequentially(result.segments, algorithm);
+    
+    // Al finalizar, un fitBounds total si hay ruta
+    if (this.pathLayer) {
+       this.map.fitBounds(this.pathLayer.getBounds(), { padding: [50, 50], animate: true });
+    }
+
+    // Al final del todo, notificamos a la interfaz
+    this.simulationFinished.emit({
+      distance: result.distance,
+      visitedCount: result.visitedCount,
+      path: result.path
+    });
+  }
+
+  private async animateRallySequentially(segments: any[], algorithm: string): Promise<void> {
+    for (let i = 0; i < segments.length; i++) {
+        const segment = segments[i];
+        const res = segment.fullResult;
+
+        if (algorithm === 'kruskal' || !res.visitedOrder || res.visitedOrder.length === 0) {
+            // Para Kruskal o segmentos sin exploración, dibujamos la línea final directamente
+            this.drawShortestPath(segment.path, true); // Aditivo
+            await new Promise(resolve => setTimeout(resolve, 800));
+        } else {
+            // Para Dijkstra/A*, usamos los mismos colores que en sus ejecuciones individuales
+            let nodeCol = '#f59e0b'; // Naranja Dijkstra
+            let edgeCol = '#fcd34d'; // Amarillo Dijkstra
+            
+            if (algorithm === 'astar') {
+                nodeCol = '#06b6d4'; // Cian A* 
+                edgeCol = '#67e8f9'; // A* claro
+            }
+
+            await new Promise<void>((resolve) => {
+                this.animateExploration(res, nodeCol, edgeCol, () => {
+                    resolve();
+                }, true); // Additive = true
+            });
+
+            await new Promise(resolve => setTimeout(resolve, 1000));
+        }
     }
   }
 
@@ -402,13 +641,27 @@ export class AlgorithmMap implements AfterViewInit, OnDestroy {
 
     if (this.selectedStartNode) {
       const marker = this.nodeMarkers.get(this.selectedStartNode);
-      if (marker) marker.setStyle({ fillColor: '#3b82f6', radius: 5 });
+      if (marker) {
+        marker.setStyle({
+          fillColor: '#3b82f6',
+          radius: 5,
+          color: '#1e3a8a',
+          weight: 1,
+        });
+      }
       this.selectedStartNode = null;
     }
 
     if (this.selectedEndNode) {
       const marker = this.nodeMarkers.get(this.selectedEndNode);
-      if (marker) marker.setStyle({ fillColor: '#3b82f6', radius: 5 });
+      if (marker) {
+        marker.setStyle({
+          fillColor: '#3b82f6',
+          radius: 5,
+          color: '#1e3a8a',
+          weight: 1,
+        });
+      }
       this.selectedEndNode = null;
     }
   }
@@ -424,7 +677,12 @@ export class AlgorithmMap implements AfterViewInit, OnDestroy {
     // Resetear colores explorados
     this.nodeMarkers.forEach((marker, id) => {
       if (id !== this.selectedStartNode && id !== this.selectedEndNode) {
-        marker.setStyle({ fillColor: '#3b82f6', radius: 5 });
+        marker.setStyle({
+          fillColor: '#3b82f6',
+          radius: 5,
+          color: '#1e3a8a',
+          weight: 1,
+        });
       }
     });
 
